@@ -1,0 +1,38 @@
+% !TEX root = ./main.tex
+
+\DeclareMathOperator{\DefPat}{Pat}
+\DeclareMathOperator{\DefExp}{Exp}
+\DeclareMathOperator{\DefCtx}{Ctx}
+\DeclareMathOperator{\DefAct}{Act}
+\DeclareMathOperator{\DefGas}{Gas}
+\DeclareMathOperator{\DefFilter}{Filter}
+\DeclareMathOperator{\KeywordFilter}{filter}
+\DeclareMathOperator{\KeywordResidue}{residue}
+% \DeclareMathOperator{\Nat}{\mathsf{Nat}}
+
+\newcommand{\Nat}[1]{\underline{#1}}
+\newcommand{\Lam}[2]{\lambda #1 . #2}
+\newcommand{\Filter}[4]{\KeywordFilter #1 ~\mathsf{do}~ #2 ~\mathsf{for}~ #3 ~\mathsf{in}~ #4}
+\newcommand{\Residue}[3]{\mathsf{do}~ #1 ~\mathsf{for}~ #2 ~\mathsf{in}~ #3}
+
+\newcommand{\FEValue}[1]{#1~\mathsf{value}}
+\newcommand{\FEStep}[2]{#1 \mapsto #2}
+
+\newcommand{\FCMark}{\circ}
+
+\newcommand{\FASkip}{\mathsf{skip}}
+\newcommand{\FAStep}{\mathsf{step}}
+\newcommand{\FGOne}{\mathsf{one}}
+\newcommand{\FGAll}{\mathsf{all}}
+
+\newcommand{\FPatMatchesExpOp}{\mathrel{\mathop{\triangleright}}}
+\newcommand{\FPatMatchesExp}[2]{#1 \FPatMatchesExpOp #2}
+
+\newcommand{\FPatMatchesCtxOpL}{\mathrel{\mathop{\triangleright_\circ}}}
+\newcommand{\FPatMatchesCtxOpR}{\mathrel{\mathop{\triangleleft_\circ}}}
+\newcommand{\FPatMatchesCtx}[3]{#1 \FPatMatchesCtxOpL #2 \{ #3 \}}
+
+\newcommand{\FMatchesOp}{}
+\newcommand{\FMatches}[2]{#1 \FMatchesOp #2}
+
+\newcommand{\FInstruct}[2]{#1 \rightsquigarrow #2}
