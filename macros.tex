@@ -15,8 +15,9 @@
 \newcommand{\Filter}[4]{\KeywordFilter #1 ~\mathsf{do}~ #2 ~\mathsf{for}~ #3 ~\mathsf{in}~ #4}
 \newcommand{\Residue}[3]{\mathsf{do}~ #1 ~\mathsf{for}~ #2 ~\mathsf{in}~ #3}
 
-\newcommand{\FEValue}[1]{#1~\mathsf{value}}
+\newcommand{\FValue}[1]{#1~\mathsf{value}}
 \newcommand{\FEStep}[2]{#1 \mapsto #2}
+\newcommand{\FSubst}[3]{[#1/#2] #3}
 
 \newcommand{\FCMark}{\circ}
 
@@ -24,6 +25,9 @@
 \newcommand{\FAStep}{\mathsf{step}}
 \newcommand{\FGOne}{\mathsf{one}}
 \newcommand{\FGAll}{\mathsf{all}}
+
+\newcommand{\FDecompose}[5]{#1 \vdash #2 = #3 \{ #4 \}_{#5}}
+\newcommand{\FCompose}[3]{#1 = #2 \{ #3 \}}
 
 \newcommand{\FPatMatchesExpOp}{\mathrel{\mathop{\triangleright}}}
 \newcommand{\FPatMatchesExp}[2]{#1 \FPatMatchesExpOp #2}
@@ -35,4 +39,8 @@
 \newcommand{\FMatchesOp}{}
 \newcommand{\FMatches}[2]{#1 \FMatchesOp #2}
 
-\newcommand{\FInstruct}[2]{#1 \rightsquigarrow #2}
+\newcommand{\FInstruct}[3]{#1 \vdash #2 \rightsquigarrow #3}
+
+\newcommand{\FTrans}[2]{#1 \rightarrow #2}
+
+\newcommand{\FStep}[3]{#1 \vdash #2 \mapsto #3}
