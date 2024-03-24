@@ -122,23 +122,40 @@
   \inferrule[FI-V]{
     \FValue{d}
   }{
-    \FInstruct{(p, a, g)}{d}{d}
-  } \qquad
-  \inferrule[FI-E]{
-    \FInstruct{(p, a, g)}{d}{d'} \\
-    \FPatMatchesExp{p}{d}
+    \FInstruct{(p, a, g, l)}{d}{d}
+  } \\
+  \inferrule[FI-Var-Y]{
+    \FPatMatchesExp{p}{x}
   }{
-    \FInstruct{(p, a, g)}{d}{\Residue{a}{g}{d'}}
+    \FInstruct{(p, a, g, l)}{x}{\Residue{a}{g}{l}{d'}}
+  } \qquad
+  \inferrule[FI-Var-N]{
+    \FPatNotMatchesExp{p}{x}
+  }{
+    \FInstruct{(p, a, g, l)}{x}{\Residue{a}{g}{l}{d'}}
   } \\
   \inferrule[FI-I]{
-    \FInstruct{(p_0, a_0, g_0)}{d_0}{d} \\
-    \FInstruct{(p, a, g)}{d}{d'}
+    \FInstruct{(p_0, a_0, g_0, l_0)}{d_0}{d} \\
+    \FInstruct{(p, a, g, l_0 + 1)}{d}{d'}
   }{
-    \FInstruct{(p_0, a_0, g_0)}{\Filter{p}{a}{g}{d_0}}{d'}
-pp  } \\
-  \inferrule[FI-Ap]{
+    \FInstruct{(p_0, a_0, g_0)}{\Filter{p}{a}{g}{d_0}}{\Filter{p}{a}{g}{d'}}
+  } \\
+  \inferrule[FI-T]{
+    \FInstruct{(p_0, a_0, g_0, l_0)}{d_0}{d} \\
+  }{
+    \FInstruct{(p_0, a_0, g_0)}{\Residue{a}{g}{l}{d_0}}{\Residue{a}{g}{l}{d'}}
+  } \\
+  \inferrule[FI-Ap-Y]{
     \FInstruct{(p, a, g)}{d_1}{d_1'} \\
-    \FInstruct{(p, a, g)}{d_2}{d_2'}
+    \FInstruct{(p, a, g)}{d_2}{d_2'} \\
+    \FPatMatchesExp{p}{d_1(d_2)}
+  }{
+    \FInstruct{(p, a, g)}{d_1(d_2)}{d_1'(d_2')}
+  } \\
+  \inferrule[FI-Ap-N]{
+    \FInstruct{(p, a, g)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, g)}{d_2}{d_2'} \\
+    \FPatNotMatchesExp{p}{d_1(d_2)}
   }{
     \FInstruct{(p, a, g)}{d_1(d_2)}{d_1'(d_2')}
   }
