@@ -1,4 +1,24 @@
-\subsection{Semantics of Matching}
+In this section, we introduce the Hazel stepper filter.
+
+We recognized some key capabilities that traditional debuggers have and will be
+also helpful to a debugger for functional programming languages.
+\begin{enumerate}
+  \item Evaluation can be paused at some point and resumed later. The user
+    should be able specify where/when the evaluation should be paused. This is
+    usually implemented as the breakpoint mechanism in a traditional debugger.
+  \item Paused evaluation can be stepped through. traditionally, debuggers will
+    provide user with three buttons to ``step through'', ``step over'' and
+    ``step out''.
+\end{enumerate}
+
+Moreover, we want some extra capabilities that are specific to functional
+programming languages and a classroom settings, especially Hazel, to be a
+useful tool for teaching and learning functional programming.
+\begin{enumerate}
+  \item It can skip the stepping process of some \emph{kind} of expression.
+  \item It controls the evaluation of the program in a granularity of
+  expression, instead of a granularity of line or instruction.ß
+\end{enumerate}
 
 To serve as a good tool for understanding the behavior of a program, the stepper
 filter should have consistent behavior with the semantics of the language. Hazel
@@ -6,6 +26,12 @@ internally uses a environment-based big-step evaluator to evaluate the program,
 but it has a consistent behavior with the substitution-based one. Therefore,
 the stepper filter shall not exhibit different behavior when building upon a
 environment-based evaluator or a substitution-based evaluator.
+
+The evaluation order of Hazel is not specified. Therefore, an expression that is
+not value might have multiple possible choice 
+
+\subsection{Matching}
+
 
 Terms that has the same structural form after substituting all bounded variables
 are considered \emph{matched}.

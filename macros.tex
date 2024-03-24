@@ -2,7 +2,11 @@
 
 %%% Editing Convience Macros
 
-\newcommand{\TODO}[1]{\textcolor{red}{\textbf{TODO}: {#1}}}
+\newif\ifdraft
+\drafttrue
+\newcommand{\TODO}[1]{\ifdraft{\textcolor{red}{\textbf{TODO}: {#1}}}\fi}
+\newcommand{\mck}[1]{\ifdraft{\color{purple}[#1 --Matt]}\fi}
+\newcommand{\hxf}[1]{\ifdraft{\color{blue}[#1 --Haoxiang]}\fi}
 
 %%% Hazel language highlight
 
@@ -22,6 +26,7 @@
 
 \DeclareMathOperator{\DefPat}{Pat}
 \DeclareMathOperator{\DefExp}{Exp}
+\DeclareMathOperator{\DefVal}{Val}
 \DeclareMathOperator{\DefCtx}{Ctx}
 \DeclareMathOperator{\DefAct}{Act}
 \DeclareMathOperator{\DefGas}{Gas}
