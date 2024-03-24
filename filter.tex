@@ -182,6 +182,11 @@
   }{
     \FTrans{\Lam{x}{d_1}(d_2)}{\FSubst{d_2}{x}{d_1}}
   } \\
+  \inferrule[FTNat]{
+    n_1 + n_2 = n
+  }{
+    \FTrans{\Nat{n_1} + \Nat{n_2}}{\Nat{n}}
+  } \\
   \inferrule[FLRes-T]{
     \FTrans{d}{d'}
   }{
