@@ -24,6 +24,19 @@
 
 %%% Stepper/Filter Semantics
 
+\DeclareMathSymbol{\Gamma}{\mathalpha}{operators}{0}
+\DeclareMathSymbol{\Delta}{\mathalpha}{operators}{1}
+\DeclareMathSymbol{\Theta}{\mathalpha}{operators}{2}
+\DeclareMathSymbol{\Lambda}{\mathalpha}{operators}{3}
+\DeclareMathSymbol{\Xi}{\mathalpha}{operators}{4}
+\DeclareMathSymbol{\Pi}{\mathalpha}{operators}{5}
+\DeclareMathSymbol{\Sigma}{\mathalpha}{operators}{6}
+\DeclareMathSymbol{\Upsilon}{\mathalpha}{operators}{7}
+\DeclareMathSymbol{\Phi}{\mathalpha}{operators}{8}
+\DeclareMathSymbol{\Psi}{\mathalpha}{operators}{9}
+\DeclareMathSymbol{\Omega}{\mathalpha}{operators}{10}
+
+
 \DeclareMathOperator{\DefPat}{Pat}
 \DeclareMathOperator{\DefExp}{Exp}
 \DeclareMathOperator{\DefVal}{Val}
@@ -51,8 +64,8 @@
 \newcommand{\FGOne}{\mathsf{one}}
 \newcommand{\FGAll}{\mathsf{all}}
 
-\newcommand{\FDecompose}[5]{#1 \vdash #2 = #3 \{ #4 \}_{#5}}
-\newcommand{\FCompose}[3]{#1 = #2 \{ #3 \}}
+\newcommand{\Decompose}[3]{#1 \Rightarrow #2 \{ #3 \}}
+\newcommand{\Compose}[3]{#1 \Leftarrow #2 \{ #3 \}}
 
 \newcommand{\FPatMatchesExpOp}{\mathrel{\mathop{\triangleright}}}
 \newcommand{\FPatMatchesExp}[2]{#1 \FPatMatchesExpOp #2}
