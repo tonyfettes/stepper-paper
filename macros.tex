@@ -1,6 +1,24 @@
 % !TEX root = ./main.tex
 
+%%% Editing Convience Macros
+
 \newcommand{\TODO}[1]{\textcolor{red}{\textbf{TODO}: {#1}}}
+
+%%% Hazel language highlight
+
+\lstdefinelanguage{hazel}{
+  columns=fullflexible,
+  keepspaces=true,
+  basicstyle=\ttfamily\color{black},
+  keywords={
+    let, in, case, end, type,
+    eval, pause, hide, debug
+  },
+  keywordstyle=\bfseries\color{black},
+  commentstyle=\color{gray},
+}
+
+%%% Stepper/Filter Semantics
 
 \DeclareMathOperator{\DefPat}{Pat}
 \DeclareMathOperator{\DefExp}{Exp}
@@ -13,7 +31,7 @@
 % \DeclareMathOperator{\Nat}{\mathsf{Nat}}
 
 \newcommand{\Nat}[1]{\underline{#1}}
-\newcommand{\Lam}[2]{\lambda #1 . #2}
+\newcommand{\Lam}[3]{\lambda #1 : #2 . #3}
 \newcommand{\Filter}[4]{\KeywordFilter #1 ~\mathsf{do}~ #2 ~\mathsf{for}~ #3 ~\mathsf{in}~ #4}
 \newcommand{\Residue}[4]{\mathsf{do}~ #1 ~\mathsf{for}~ #2 ~\mathsf{at}~ #3 ~\mathsf{in}~ #4}
 
@@ -48,6 +66,10 @@
 \newcommand{\FTrans}[2]{#1 \rightarrow #2}
 
 \newcommand{\FStep}[3]{#1 \vdash #2 \mapsto #3}
+
+\newcommand{\FHasType}[3]{#1 \vdash #2 : #3}
+\newcommand{\FInTypeContext}[3]{#1 : #2 \in #3}
+\newcommand{\FTNat}{\mathbb{N}}
 
 %%% Local Variables:
 %%% mode: latex

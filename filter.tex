@@ -1,3 +1,7 @@
+\subsection{Definitions}
+
+\TODO{Discuss: do we need to specify the substitution here?}
+
 \fbox{\(\DefAct a\)} Action \(a\) of a filter
 \[
   \DefAct a \Coloneqq \FASkip \mid \FAStep
@@ -10,7 +14,7 @@
 
 \fbox{\(\DefExp d\)} Expression \(d\).
 \[
-  \DefExp d \Coloneqq x \mid d(d) \mid \Lam{x}{d} \mid d + d \mid \Nat{n} \mid \Filter{p}{a}{g}{d} \mid \Residue{a}{g}{d}
+  \DefExp d \Coloneqq x \mid d(d) \mid \Lam{x}{\tau}{d} \mid d + d \mid \Nat{n} \mid \Filter{p}{a}{g}{d} \mid \Residue{a}{g}{d}
 \]
 
 \fbox{\(\DefCtx \mathcal{E}\)} Context \(\mathcal{E}\).
@@ -21,7 +25,21 @@
   \mid d(\mathcal{E})
   \mid \mathcal{E} + d
   \mid d + \mathcal{E}
+  \mid \Filter{p}{a}{g}{\mathcal{E}}
+  \mid \Residue{a}{g}{l}{\mathcal{E}}
 \]
+
+\fbox{\(\DefPat p\)} Pattern \(p\).
+\[
+  \DefPat p \Coloneqq \ast \mid \$e \mid \$v \mid x \mid p(p) \mid \Lam{x}{\tau}{d} \mid \Lam{\ast}{\tau}{d} \mid p + p \mid \Nat{n}
+\]
+
+\fbox{\(\DefFilter f\)} Filter \(f\).
+\[
+  \DefFilter f = (p, a, g)
+\]
+
+\subsection{Dynamics}
 
 \fbox{\(\FDecompose{(a, g, l)}{d}{\mathcal{E}}{d'}{(a, g)}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
@@ -65,16 +83,6 @@
     \FDecompose{(a, g, l)}{d_1(d_2)}{d_1(\mathcal{E}_2)}{d_2'}{(a_2', g_2')}
   } \\
 \end{mathpar}
-
-\fbox{\(\DefPat p\)} Pattern \(p\).
-\[
-  \DefPat p \Coloneqq x \mid p(p) \mid \Lam{x}{d} \mid p + p \mid \Nat{n}
-\]
-
-\fbox{\(\DefFilter f\)} Filter \(f\).
-\[
-  \DefFilter f = (p, a, g)
-\]
 
 \fbox{\(\FPatMatchesExp{p}{d}\)} means that pattern \(p\) matches expression \(d\).
 \begin{mathpar}
@@ -206,7 +214,7 @@
   }{
     \FTrans{\Residue{a}{g}{d}}{\Residue{a}{g}{d'}}
   } \qquad
-  \inferrule[FLRes-V]{
+  \inferrule[\textcolor{red}{FLRes-V}]{
     \FTrans{d}{v} \\
     \FValue{v}
   }{
@@ -214,10 +222,10 @@
   }
 \end{mathpar}
 
-\fbox{\(\FStep{(p, a, g)}{d}{d'}\)} Expression \(d\) steps to expression \(d'\).
+\fbox{\(\FStep{(a, g)}{d}{d'}\)} Expression \(d\) steps to expression \(d'\).
 \begin{mathpar}
   \inferrule[FS-Step]{
-    \FInstruct{(p, a, g, 0)}{d}{d_i} \\
+    \FInstruct{(a, g, 0)}{d}{d_i} \\
     \FDecompose{(a, g)}{d_i}{\mathcal{E}}{d_0}{(\FAStep, g_0)} \\
     \FTrans{d_0}{d_0'} \\
     \FCompose{d'}{\mathcal{E}}{d_0'}
@@ -225,15 +233,64 @@
     \FStep{(p, a, g)}{d}{d'}
   } \\
   \inferrule[FS-Skip]{
-    \FInstruct{(p, a, g, 0)}{d}{d_i} \\
+    \FInstruct{(a, g, 0)}{d}{d_i} \\
     \FDecompose{(a, g)}{d_i}{\mathcal{E}}{d_0}{(\FASkip, g_0)} \\
     \FTrans{d_0}{d_0'} \\
     \FCompose{d'}{\mathcal{E}}{d_0'} \\
-    \FStep{(p, a, g)}{d'}{d''}
+    \FStep{(a, g)}{d'}{d''}
   }{
-    \FStep{(p, a, g)}{d}{d''}
+    \FStep{(a, g)}{d}{d''}
   }
 \end{mathpar}
+
+\subsection{Statics}
+
+\fbox{\(\FHasType{\Gamma}{e}{\tau}\)} Expression has type \(\tau\) in context \(\Gamma\).
+
+\begin{mathpar}
+  \inferrule[FT-Var]{
+    \FInTypeContext{x}{\tau}{\Gamma}\\
+  }{
+    \FHasType{\Gamma}{x}{\tau}
+  } \qquad
+  \inferrule[FT-Nat]{
+  }{
+    \FHasType{\Gamma}{\Nat{n}}{\FTNat}
+  }
+  \inferrule[FT-Residue]{
+    \FHasType{\Gamma}{e}{\tau}
+  }{
+    \FHasType{\Residue{a}{g}{l}{e}}{\tau}{\Gamma}
+  } \quad
+  \inferrule[FT-Filter]{
+    \FHasType{\Gamma}{e}{\tau}
+  }{
+    \FHasType{\Filter{p}{a}{g}{e}}{\tau}{\Gamma}
+  } \\
+  \inferrule[FT-Add]{
+    \FHasType{\Gamma}{e_1}{\FTNat}\\
+    \FHasType{\Gamma}{e_2}{\FTNat}
+  }{
+    \FHasType{\Gamma}{e_1 + e_2}{\FTNat}
+  } \quad
+  \inferrule[FT-Fun]{
+    \FHasType{\Gamma, x : \tau}{e}{\tau'}
+  }{
+    \FHasType{\Gamma}{\Lam{x}{\tau}{e}}{\tau \to \tau'}
+  } \\
+  \inferrule[FT-App]{
+    \FHasType{\Gamma}{e_1}{\tau_1 \to \tau_2}\\
+    \FHasType{\Gamma}{e_2}{\tau_1}
+  }{
+    \FHasType{\Gamma}{e_1(e_2)}{\tau_1}
+  }
+\end{mathpar}
+
+\fbox{\(\)}
+
+\TODO{A judgement converting DHExp to DHExp'}
+
+\TODO{A judgement that apply (implement) the filter/do statements inserted in the judgement}
 
 %%% Local Variables:
 %%% mode: latex
