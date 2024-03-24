@@ -1,0 +1,260 @@
+\subsection{Semantics of Matching}
+
+Terms that has the same structural form after substiting all bounded variables are considered \emph{matched}.
+
+\begin{verbatim}
+let g = fun x -> x + x in
+pause g in
+(fun x -> x + x)(3)
+== (fun x -> x + x)(3)
+\end{verbatim}
+
+\begin{verbatim}
+let g = fun x -> x + x in
+pause fun x -> x + x in
+g(3)
+== g(3) / (fun x -> x + x)(3) # Either would be OK. #
+\end{verbatim}
+
+The matching process is recursive.
+
+\begin{verbatim}
+let y = fun x -> x in
+let g = fun x -> y in
+let h = fun x -> (fun x -> x) in
+pause g in
+h(3)
+== h(3)
+\end{verbatim}
+
+\subsection{Four filters: Hide, Eval, Pause and Debug}
+
+Typical use case for the four basic filters.
+
+We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
+\begin{verbatim}
+eval 1 + 2 in
+1 + 2
+\end{verbatim}
+
+We want the \verb|hide| filters to hide away one step.
+\begin{verbatim}
+hide let _ = _ in _ in
+let x = 3 in
+let y = 4 in
+x + y
+== 3 + 4
+== y
+\end{verbatim}
+while using \verb|eval| it will behave like this:
+\begin{verbatim}
+eval let _ = _ in _ in
+let x = 3 in
+let y = 4 in
+x + y
+== 7
+\end{verbatim}
+
+The \verb|hide| filter will be \emph{used up} when its body expression
+is actually being evaluated.
+
+During evaluation, we want to be able to examine every instruction
+transitioning steps.
+
+\begin{verbatim}
+eval 1 + 2 + 3 + 4 in
+pause 3 + 3 in
+1 + 2 + 3 + 4
+== 3 + 3 + 4
+== 10
+\end{verbatim}
+
+This would be especially useful when unfolding a higher level
+expression to its individual terms, for example I want to know how
+many terms of \verb|fib(1)| I need to call to evaluate the whole
+\verb|fib(5)|.
+
+On the other hand, we want to went through all the evaluation process of a
+sub-expression, for example when debugging the implementation of a function
+\begin{verbatim}
+let (is_even: Int -> Bool, is_odd: Int -> Bool) = ... in
+debug is_odd($v) in
+is_even(5)
+\end{verbatim}
+
+The difference between \verb|pause| and \verb|debug| is subtle. For
+example, considering the following two piece of code:
+\begin{verbatim}
+eval $e in
+pause (1 + 2) + (3 + 4) + (5 + 6) in
+eval 3 + 7 + (5 + 6) in
+(1 + 2) + (3 + 4) + (5 + 6)
+== (1 + 2) + (3 + 4) + (5 + 6)
+== 21
+\end{verbatim}
+and
+\begin{verbatim}
+eval $e in
+debug (1 + 2) + (3 + 4) + (5 + 6) in
+eval 3 + 7 + (5 + 6) in
+(1 + 2) + (3 + 4) + (5 + 6)
+== (1 + 2) + (3 + 4) + (5 + 6)
+== 3 + (3 + 4) + (5 + 6)
+== 21
+\end{verbatim}
+The first one will immediately evaluate to final value is because it is a \verb|pause| statement, which will be only effective once.
+
+Filters can't be applied on values. A more significant corollary of this is they cannot be applied on variables as well.
+\begin{verbatim}
+eval $e in
+pause x in
+pause y in
+let x = 3 in
+let y = 4 in
+x + y
+== 7
+\end{verbatim}
+
+\subsection{Interaction between filter statements}
+
+We want nested filter statements to behave correctly, i.e.
+\begin{enumerate}
+\item For every pattern \verb|p|, \verb|pause p| cancels the effects
+  of \verb|eval p| and \verb|hide p|, vice versa.
+\item Inner filter statements takes percendence.
+\end{enumerate}
+
+\begin{verbatim}
+pause 1 + 2 + 3 + 4 in
+eval 1 + 2 + 3 + 4 in
+1 + 2 + 3 + 4
+== 10
+\end{verbatim}
+
+\begin{verbatim}
+pause $e in
+eval 1 + 2 + 3 + 4 in
+pause 1 + 2 + 3 + 4 in
+1 + 2 + 3 + 4
+== [1 + 2] + 3 + 4
+\end{verbatim}
+
+\begin{verbatim}
+pause $e in
+hide let _ = _ in _ in
+pause let _ = _ in _ in
+let x = 3 in
+x + 4
+== [let x = 3 in x + 4]
+\end{verbatim}
+
+The nesting properties should works across bindings.
+
+\begin{verbatim}
+eval $e in
+let x = 1 in
+pause 3 + 3 in
+let y = 2 in
+eval 3 + 3 in
+x + y + 3 + 4
+== 10
+\end{verbatim}
+
+\begin{verbatim}
+let add = fun x, y -> pause $e in x + y in
+eval $e in
+add(3, 4)
+== [3 + 4]
+\end{verbatim}
+
+The filters should matches against the dynamic \emph{value} of the expression
+
+\begin{verbatim}
+let add = fun x, y -> pause 3 + 4 in x + y in
+eval $e in
+add(3, 4)
+== [3 + 4]
+\end{verbatim}
+while
+\begin{verbatim}
+let add = fun x, y -> pause 3 + 4 in x + y in
+eval $e in
+add(3, 5)
+== 8
+\end{verbatim}
+
+We want the filter to recover to \emph{older} state when it finish
+evaluating matched sub-expression.
+
+\begin{verbatim}
+pause $e in
+eval 1 + 2 + 3 + 4 in
+pause 3 + 3 in
+1 + 2 + 3 + 4
+== 3 + 3 + 4
+== 10
+\end{verbatim}
+
+After evaluating \verb|3 + 3|, the stepper falls back to eval mode
+since eval filter matches \verb|1 + 2 + 3 + 4|, so it directly
+evaluates to \verb|10|.
+
+We also want a \verb|eval| filter to automatically evaluate all sub-expression until it cannot procced.
+
+\subsection{Handling inconsistency between DHExp and UExp}
+
+There are inconsistencies between the surface expression and expression for evaluation in Hazel. For example,
+fix-points are inserted in the expression during elaboration. We want the filters to work with fix-points, with-out
+user acknowledging that they actually needs a fix-point to implemenet the recursion.
+
+\begin{verbatim}
+let map : ([Int], Int -> Int) -> [Int] = fun xs, f ->
+  case xs
+  | [] => []
+  | hd :: tl => f(hd)::map(tl, f)
+  end
+in
+let square = fun x -> x * x in
+pause map($v) in
+map([1, 2, 3], square)
+== 1::map([2, 3], f)
+== 1::4::map([3], f)
+\end{verbatim}
+
+In the example above, we don't want to use to click twice to do unroll and apply, instead we want to merge these two transition
+in one step.
+
+\subsection{Good but unrealistic for now}
+
+There are also something that we think would be intuitive and useful but not possible with current implementation
+
+\begin{verbatim}
+let fib : Int -> Int =
+  fun n ->
+    if n <= 1 then
+      n
+    else
+      fib(n - 1) + fib(n - 2)
+in
+pause fib($v) + fib($v) in
+fib(5)
+== 3
+\end{verbatim}
+
+Intuitively we shall see a evaluation trace like this:
+\begin{verbatim}
+...
+== fib(4) + fib(3)
+== fib(3) + fib(2) + fib(3)
+== fib(3) + fib(2) + fib(2) + fib(1)
+== ...
+\end{verbatim}
+
+This is no possible since this require us to trasverse all possible
+evaluation sequence given a program, which would be super powerful,
+but at the same time super slow.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
