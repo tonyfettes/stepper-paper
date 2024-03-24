@@ -23,32 +23,46 @@
   \mid d + \mathcal{E}
 \]
 
-\fbox{\(\FDecompose{(a, g)}{d}{\mathcal{E}}{d'}{(a, g)}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
+\fbox{\(\FDecompose{(a, g, l)}{d}{\mathcal{E}}{d'}{(a, g)}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
   \inferrule[FC-Mark]{
   }{
-    \FDecompose{(a, g)}{d}{\FCMark}{d}{(a, g)}
+    \FDecompose{(a, g, l)}{d}{\FCMark}{d}{(a, g)}
   } \\
-  \inferrule[FC-Inst-One]{
-    \FDecompose{(a, \FGOne)}{d}{\mathcal{E}}{d'}{(a', g')}
+  \inferrule[FC-Inst-One-New]{
+    \FDecompose{(a, \FGOne, l)}{d}{\mathcal{E}}{d'}{(a', g')} \\
+    l > l_0
   }{
-    \FDecompose{(a_0, g_0)}{\Residue{a}{\FGOne}{d}}{\mathcal{E}}{d'}{(a', g')}
+    \FDecompose{(a_0, g_0, l_0)}{\Residue{a}{\FGOne}{l}{d}}{\mathcal{E}}{d'}{(a', g')}
   } \\
-  \inferrule[FC-Inst-All]{
-    \FDecompose{(a, \FGAll)}{d}{\mathcal{E}}{d'}{(a', g')}
+  \inferrule[FC-Inst-One-Old]{
+    \FDecompose{(a_0, g_0, l_0)}{d}{\mathcal{E}}{d'}{(a', g')} \\
+    l \leq l_0
   }{
-    \FDecompose{(a_0, g_0)}{\Residue{a}{\FGAll}{d}}{\Residue{a}{\FGAll}{\mathcal{E}}}{d'}{(a', g')}
+    \FDecompose{(a_0, g_0, l_0)}{\Residue{a}{\FGOne}{l}{d}}{\mathcal{E}}{d'}{(a', g')}
+  } \\
+  \inferrule[FC-Inst-All-New]{
+    \FDecompose{(a, \FGAll, l)}{d}{\mathcal{E}}{d'}{(a', g')} \\
+    l > l_0
+  }{
+    \FDecompose{(a_0, g_0, l_0)}{\Residue{a}{\FGAll}{l}{d}}{\Residue{a}{\FGAll}{\mathcal{E}}}{d'}{(a', g')}
+  } \\
+  \inferrule[FC-Inst-All-Old]{
+    \FDecompose{(a_0, g_0, l_0)}{d}{\mathcal{E}}{d'}{(a', g')} \\
+    l \leq l_0
+  }{
+    \FDecompose{(a_0, g_0, l_0)}{\Residue{a}{\FGAll}{l}{d}}{\Residue{a}{\FGAll}{\mathcal{E}}}{d'}{(a', g')}
   } \\
   \inferrule[FC-Ap-L]{
-    \FDecompose{(a, g)}{d_0}{\mathcal{E}_1}{d_1'}{(a_1', g_1')}
+    \FDecompose{(a, g, l)}{d_0}{\mathcal{E}_1}{d_1'}{(a_1', g_1')}
   }{
-    \FDecompose{(a, g)}{d_1(d_2)}{\mathcal{E}_1(d_2)}{d_1'}{(a_1', g_1')}
+    \FDecompose{(a, g, l)}{d_1(d_2)}{\mathcal{E}_1(d_2)}{d_1'}{(a_1', g_1')}
   } \qquad
   \inferrule[FC-Ap-R]{
     \FValue{d_1} \\
-    \FDecompose{(a, g)}{d_2}{\mathcal{E}_2}{d_2'}{(a_2', g_2')}
+    \FDecompose{(a, g, l)}{d_2}{\mathcal{E}_2}{d_2'}{(a_2', g_2')}
   }{
-    \FDecompose{(a, g)}{d_1(d_2)}{d_1(\mathcal{E}_2)}{d_2'}{(a_2', g_2')}
+    \FDecompose{(a, g, l)}{d_1(d_2)}{d_1(\mathcal{E}_2)}{d_2'}{(a_2', g_2')}
   } \\
 \end{mathpar}
 
@@ -117,7 +131,7 @@
 %   }
 % \end{mathpar}
 
-\fbox{\(\FInstruct{(p, a, g)}{d}{d'}\)} \(d\) is dynamically instructed to \(d'\).
+\fbox{\(\FInstruct{(p, a, g, l)}{d}{d'}\)} \(d\) is dynamically instructed to \(d'\).
 \begin{mathpar}
   \inferrule[FI-V]{
     \FValue{d}
@@ -138,26 +152,26 @@
     \FInstruct{(p_0, a_0, g_0, l_0)}{d_0}{d} \\
     \FInstruct{(p, a, g, l_0 + 1)}{d}{d'}
   }{
-    \FInstruct{(p_0, a_0, g_0)}{\Filter{p}{a}{g}{d_0}}{\Filter{p}{a}{g}{d'}}
+    \FInstruct{(p_0, a_0, g_0, l_0)}{\Filter{p}{a}{g}{d_0}}{\Filter{p}{a}{g}{d'}}
   } \\
   \inferrule[FI-T]{
     \FInstruct{(p_0, a_0, g_0, l_0)}{d_0}{d} \\
   }{
-    \FInstruct{(p_0, a_0, g_0)}{\Residue{a}{g}{l}{d_0}}{\Residue{a}{g}{l}{d'}}
+    \FInstruct{(p_0, a_0, g_0, l_0)}{\Residue{a}{g}{l}{d_0}}{\Residue{a}{g}{l}{d'}}
   } \\
   \inferrule[FI-Ap-Y]{
-    \FInstruct{(p, a, g)}{d_1}{d_1'} \\
-    \FInstruct{(p, a, g)}{d_2}{d_2'} \\
+    \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
     \FPatMatchesExp{p}{d_1(d_2)}
   }{
-    \FInstruct{(p, a, g)}{d_1(d_2)}{d_1'(d_2')}
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{d_1'(d_2')}
   } \\
   \inferrule[FI-Ap-N]{
-    \FInstruct{(p, a, g)}{d_1}{d_1'} \\
-    \FInstruct{(p, a, g)}{d_2}{d_2'} \\
+    \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
     \FPatNotMatchesExp{p}{d_1(d_2)}
   }{
-    \FInstruct{(p, a, g)}{d_1(d_2)}{d_1'(d_2')}
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{d_1'(d_2')}
   }
 \end{mathpar}
 
@@ -184,7 +198,7 @@
 \fbox{\(\FStep{(p, a, g)}{d}{d'}\)} Expression \(d\) steps to expression \(d'\).
 \begin{mathpar}
   \inferrule[FS-Step]{
-    \FInstruct{(p, a, g)}{d}{d_i} \\
+    \FInstruct{(p, a, g, 0)}{d}{d_i} \\
     \FDecompose{(a, g)}{d_i}{\mathcal{E}}{d_0}{(\FAStep, g_0)} \\
     \FTrans{d_0}{d_0'} \\
     \FCompose{d'}{\mathcal{E}}{d_0'}
@@ -192,7 +206,7 @@
     \FStep{(p, a, g)}{d}{d'}
   } \\
   \inferrule[FS-Skip]{
-    \FInstruct{(p, a, g)}{d}{d_i} \\
+    \FInstruct{(p, a, g, 0)}{d}{d_i} \\
     \FDecompose{(a, g)}{d_i}{\mathcal{E}}{d_0}{(\FASkip, g_0)} \\
     \FTrans{d_0}{d_0'} \\
     \FCompose{d'}{\mathcal{E}}{d_0'} \\
