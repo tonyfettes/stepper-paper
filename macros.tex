@@ -7,6 +7,8 @@
 \newcommand{\TODO}[1]{\ifdraft{\textcolor{red}{\textbf{TODO}: {#1}}}\fi}
 \newcommand{\mck}[1]{\ifdraft{\color{purple}[#1 --Matt]}\fi}
 \newcommand{\hxf}[1]{\ifdraft{\color{blue}[#1 --Haoxiang]}\fi}
+\newcommand{\cyr}[1]{\ifdraft{\color{green}[#1 --Cyrus]}\fi}
+
 
 %%% Hazel language highlight
 
@@ -45,24 +47,35 @@
 \DeclareMathOperator{\DefGas}{Gas}
 \DeclareMathOperator{\DefFilter}{Filter}
 \DeclareMathOperator{\KeywordFilter}{filter}
-\DeclareMathOperator{\KeywordResidue}{residue}
+\DeclareMathOperator{\KeywordHide}{hide}
+\DeclareMathOperator{\KeywordEval}{eval}
+\DeclareMathOperator{\KeywordPause}{pause}
+\DeclareMathOperator{\KeywordDebug}{debug}
+\DeclareMathOperator{\KeywordResidue}{do}
 % \DeclareMathOperator{\Nat}{\mathsf{Nat}}
 
 \newcommand{\Nat}[1]{\underline{#1}}
-\newcommand{\Lam}[3]{\lambda #1 : #2 . #3}
-\newcommand{\Filter}[4]{\KeywordFilter #1 ~\mathsf{do}~ #2 ~\mathsf{for}~ #3 ~\mathsf{in}~ #4}
-\newcommand{\Residue}[4]{\mathsf{do}~ #1 ~\mathsf{for}~ #2 ~\mathsf{at}~ #3 ~\mathsf{in}~ #4}
-
+\newcommand{\Lam}[2]{\lambda #1 . #2}
+\newcommand{\Filter}[2]{\KeywordFilter #1 ~\mathsf{in}~ #2}
+\newcommand{\FilterEval}[2]{\KeywordEval #1 ~\mathsf{in}~ #2}
+\newcommand{\FilterHide}[2]{\KeywordHide #1 ~\mathsf{in}~ #2}
+\newcommand{\FilterDebug}[2]{\KeywordDebug #1 ~\mathsf{in}~ #2}
+\newcommand{\FilterPause}[2]{\KeywordPause #1 ~\mathsf{in}~ #2}
+\newcommand{\Residue}[4]{\prescript{#1}{#3}{\langle} #4 \rangle^{#2}}
+\newcommand{\ResidueEval}[2]{\KeywordEval \# #1 ~\mathsf{in}~ #2}
+\newcommand{\ResidueHide}[2]{\KeywordHide \# #1 ~\mathsf{in}~ #2}
+\newcommand{\ResiduePause}[2]{\KeywordPause \# #1 ~\mathsf{in}~ #2}
+\newcommand{\ResidueDebug}[2]{\KeywordDebug \# #1 ~\mathsf{in}~ #2}
 \newcommand{\Value}[1]{#1~\mathsf{value}}
 \newcommand{\FEStep}[2]{#1 \mapsto #2}
 \newcommand{\FSubst}[3]{[#1/#2] #3}
 
 \newcommand{\FCMark}{\circ}
 
-\newcommand{\FASkip}{\mathsf{skip}}
-\newcommand{\FAStep}{\mathsf{step}}
-\newcommand{\FGOne}{\mathsf{one}}
-\newcommand{\FGAll}{\mathsf{all}}
+\newcommand{\ActSkip}{\mathsf{skip}}
+\newcommand{\ActStep}{\mathsf{step}}
+\newcommand{\GasOne}{\mathsf{one}}
+\newcommand{\GasAll}{\mathsf{all}}
 
 \DeclareMathOperator{\Strip}{strip}
 

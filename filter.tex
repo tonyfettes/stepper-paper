@@ -1,19 +1,76 @@
-\subsection{Definitions}
+\section{Filtered Stepper Calculus}
 
-\fbox{\(\DefAct a\)} Action \(a\) of a filter
-\[
-  \DefAct a \Coloneqq \FASkip \mid \FAStep
-\]
+In this section, we will discuss the semantics of the \emph{Filtered Stepper
+Calculus}. We first introduce the syntax of the language, then we discuss the
+the dynamics of the language, and finally we discuss the statics of the
+language. The static part is optional for understanding and implement the filtered
+stepper calculus, but is useful as a foundation to prove meta-theory theorems
+about the calculus, for example, \emph{progression} and \emph{preservation}.
 
-\fbox{\(\DefGas g\)} Gas \(g\) of a filter.
-\[
-  \DefGas g \Coloneqq \FGOne \mid \FGAll
-\]
+\TODO{introduction to this section}
 
-\fbox{\(\DefExp d\)} Expression \(d\).
-\[
-  \DefExp d \Coloneqq x \mid d(d) \mid \Lam{x}{d} \mid d + d \mid \Nat{n} \mid \Filter{p}{a}{g}{d} \mid \Residue{a}{g}{l}{d}
-\]
+\subsection{Syntax}
+
+% \TODO{put syntax into a figure}
+\begin{figure}[h]
+  \begin{equation*}
+    \begin{array}{rcl}
+      \DefAct a    &\Coloneqq& \ActSkip \mid \ActStep \\
+      \DefGas g    &\Coloneqq& \GasOne \mid \GasAll \\
+      \DefExp e    &\Coloneqq& x \mid e(e) \mid \Lam{x}{e} \mid e + e \mid \Nat{n} \\
+                   &\mid     & \Filter{f}{e} \\
+                   &\mid     & \Residue{a}{g}{l}{e} \\
+      \DefPat p    &\Coloneqq& x \mid p(p) \mid \Lam{x}{e} \mid p + p \mid \Nat{n} \\
+                   &\mid     & \$e \\
+                   &\mid     & \$v \\
+      \DefFilter f &\Coloneqq& (p, a, g) \\
+    \end{array}
+  \end{equation*}
+  \caption{Syntax of Filtered Stepper Calculus}
+  \label{fig:filter-syntax}
+\end{figure}
+
+\TODO{overview of syntax}
+
+The syntax of filter stepper calculus (Fig.~\ref{fig:filter-syntax}) is a
+extended version of untyped lambda calculus. Additionally, natural numbers and
+addition are added to it for some more concrete demonstration. It introduce two
+new expression to a untyped lambda calculus language, \texttt{Filter} and
+\texttt{Residue}. The \texttt{Filter} expression is visible at user level,
+indicating the expression surrounded by the expression is filtered by the
+filter. The \texttt{Residue} expression is used internally by the stepper and is
+not visible to the user. It is used to signal the \emph{residue} of a effect of
+applying a filter to an expression.
+
+A filter is a tuple of a pattern, an action, and a gas. The pattern
+is a mutated of the term of untyped lambda calculus. Apart from constructs like
+variables, applications, and lambdas, it also includes some new constructs, a
+forall pattern \(\$e\), a value pattern \(\$v\). The action is a tag indicating
+the action to be taken when the pattern matches an expression. It has two
+form, \(\ActSkip\) and \(\ActStep\). The gas is another tag indicating the
+live time of the effect of a filter. It has two form, \(\GasOne\) and
+\(\GasAll\).
+
+The residue expression \(\Residue{a}{g}{l}{e}\) is a expression that is used to
+store the residue of the effect of a filter. It has four components, an action
+\(a\), a gas \(g\), a priority \(l\), and a expression \(e\). The action and the
+gas are the same as the ones in a filter. The priority is a natural number
+indicating the priority of the residue.
+
+% \fbox{\(\DefAct a\)} Action \(a\) of a filter
+% \[
+%   \DefAct a \Coloneqq \ActSkip \mid \ActStep
+% \]
+
+% \fbox{\(\DefGas g\)} Gas \(g\) of a filter.
+% \[
+%   \DefGas g \Coloneqq \GasOne \mid \GasAll
+% \]
+
+% \fbox{\(\DefExp d\)} Expression \(d\).
+% \[
+%   \DefExp d \Coloneqq x \mid d(d) \mid \Lam{x}{d} \mid d + d \mid \Nat{n} \mid \Filter{(p, a, g)}{d} \mid \Residue{a}{g}{l}{d}
+% \]
 
 % \fbox{\(\DefVal d\)} Value \(v\).
 % \[
@@ -21,6 +78,56 @@
 % \]
 
 % \mck{I added a value thing here but we should probably actually define it as a judgement instead.}
+
+% \mck{Maybe replace $\Residue{a}{g}{l}{\mathcal{E}}$ with $\Residue{a}{\GasAll}{l}{\mathcal{E}}$ because only $\GasAll$ is possible?}
+
+% \fbox{\(\DefPat p\)} Pattern \(p\).
+% \[
+%   \DefPat p \Coloneqq \$e \mid \$v \mid x \mid p(p) \mid \Lam{x}{d} \mid p + p \mid \Nat{n}
+% \]
+
+% \mck{The $\lambda \$x. $ form actually isn't necessary because we use alpha-equivalence later.}
+
+% \fbox{\(\DefFilter f\)} Filter \(f\).
+% \[
+%   \DefFilter f = (p, a, g)
+% \]
+
+%\TODO{change notation of filter to use $f$}
+
+%\TODO{change notation for do to be more compact}
+
+\subsection{Contextual Dynamics}
+
+\TODO{overview of dynamics judgements, starting from the main judgement}
+
+\TODO{motivate the two rules}
+
+\fbox{\(\FStep{(a, g)}{d}{d'}\)} Expression \(d\) steps to expression \(d'\).
+\begin{mathpar}
+  \inferrule[FS-Step]{
+    \FInstruct{(a, g, 0)}{d}{d_i} \\
+    \Decompose{d_i}{\mathcal{E}}{d_0} \\
+    \FTrans{d_0}{d_0'} \\
+    \Compose{d'}{\mathcal{E}}{d_0'}
+  }{
+    \FStep{(p, a, g)}{d}{d'}
+  } \\
+  \inferrule[FS-Skip]{
+    \FInstruct{(a, g, 0)}{d}{d_i} \\
+    \Decompose{d_i}{\mathcal{E}}{d_0} \\
+    \FTrans{d_0}{d_0'} \\
+    \Compose{d'}{\mathcal{E}}{d_0'} \\
+    \FStep{(a, g)}{d'}{d''}
+  }{
+    \FStep{(a, g)}{d}{d''}
+  }
+\end{mathpar}
+
+\TODO{hard code defaults instead of making them part of the judgement}
+
+\mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
+
 
 \fbox{\(\DefCtx \mathcal{E}\)} Context \(\mathcal{E}\).
 \[
@@ -30,25 +137,10 @@
   \mid d(\mathcal{E})
   \mid \mathcal{E} + d
   \mid d + \mathcal{E}
-  \mid \Filter{p}{a}{g}{l}{\mathcal{E}}
+  \mid \Filter{(p, a, g)}{l}{\mathcal{E}}
   \mid \Residue{a}{g}{l}{\mathcal{E}}
 \]
 
-% \mck{Maybe replace $\Residue{a}{g}{l}{\mathcal{E}}$ with $\Residue{a}{\FGAll}{l}{\mathcal{E}}$ because only $\FGAll$ is possible?}
-
-\fbox{\(\DefPat p\)} Pattern \(p\).
-\[
-  \DefPat p \Coloneqq \$e \mid \$v \mid x \mid p(p) \mid \Lam{x}{d} \mid p + p \mid \Nat{n}
-\]
-
-% \mck{The $\lambda \$x. $ form actually isn't necessary because we use alpha-equivalence later.}
-
-\fbox{\(\DefFilter f\)} Filter \(f\).
-\[
-  \DefFilter f = (p, a, g)
-\]
-
-\subsection{Dynamics}
 
 \fbox{\(\Value e\)} Expression \(e\) is a value.
 \begin{mathpar}
@@ -73,7 +165,7 @@
     [x / v] \Lam{y}{\tau}{e} &= \Lam{y}{\tau}{e} && \text{if } x = y \\
   \end{aligned}
 \]
-\hxf{Do we really need a judgement for substitution?}
+
 % \begin{mathpar}
 %   \inferrule[S-Var-Eq]{
 %   }{
@@ -90,7 +182,7 @@
 %   } \\
 %   \inferrule[S-Lam-Eq]{
 %   }{
-%     [x / v] \Lam{x}{\tau}{e} = \Lam{x}{\tau}{e}
+%     [x / v] \Lam{x}{e} = \Lam{x}{e}
 %   } \qquad
 %   \inferrule[S-Lam-Neq]{
 %     x \neq y
@@ -98,6 +190,21 @@
 %     [x / v] \Lam{y}{\tau}{e} = \Lam{y}{\tau}{[x / v] e}
 %   } \\
 % \end{mathpar}
+\TODO{swap order to [v/x]e}
+
+\TODO{missing filter and do cases}
+
+\TODO{missing number literal and addition cases}
+
+\TODO{use e instead of d everywhere}
+
+\TODO{substitution into patterns}
+
+\TODO{fix Lam macro}
+
+\TODO{combine decompose and recompose?}
+
+\TODO{add function that removes do one to formalism}
 
 \mck{It might be clearer if we write out a separate recompose judgement too. I think decompose and recompose behave differently especially with regard to do statements}
 
@@ -120,7 +227,7 @@
   \inferrule[D-Filter-I]{
     \Decompose{e}{\mathcal{E}}{e'}
   }{
-    \Decompose{\Filter{p}{a}{g}{e}}{\mathcal{E}}{\Filter{p}{a}{g}{e'}}
+    \Decompose{\Filter{(p, a, g)}{e}}{\mathcal{E}}{\Filter{(p, a, g)}{e'}}
   } \\
   \inferrule[D-Filter-E]{
     \Value{v}
@@ -162,6 +269,7 @@
     \Decompose{e_1 + e_2}{\circ}{e_1 + e_2}
   }
 \end{mathpar}
+\mck{D-Filter-E rule does not have any filters in it}
 
 \mck{The last four rules seem to specify an evaluation order - is this desired behaviour? I thought we were going to mention the nondeterminism somewhere in the text}
 
@@ -170,7 +278,7 @@
 \fbox{\(\Compose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
   \inferrule[C-Top]{
-    \ 
+    \
   }{
     \Compose{e}{\circ}{e}
   } \qquad
@@ -197,7 +305,7 @@
   \inferrule[C-Filter]{
     \Compose{e'}{\mathcal{E}}{e}
   }{
-    \Compose{\Filter{p}{a}{g}{e'}}{\Filter{p}{a}{g}{\mathcal{E}}}{e}
+    \Compose{\Filter{(p, a, g)}{e'}}{\Filter{(p, a, g)}{\mathcal{E}}}{e}
   } \\
   \inferrule[C-Residue]{
     \Compose{e'}{\mathcal{E}}{e}
@@ -232,7 +340,7 @@
   \inferrule[\(\alpha\)-Filter]{
     e_1 \equiv_\alpha e_2
   }{
-    \Filter{p}{a}{g}{e_1} \equiv_\alpha \Filter{p}{a}{g}{e_2}
+    \Filter{(p, a, g)}{e_1} \equiv_\alpha \Filter{(p, a, g)}{e_2}
   } \\
   \inferrule[\(\alpha\)-Residue]{
     e_1 \equiv_\alpha e_2
@@ -245,11 +353,11 @@
 \[
   \begin{aligned}
     \Strip{x} &= x \\
-    \Strip{\Lam{x}{\tau}{e}} &= \Lam{x}{\tau}{\Strip{e}} \\
+    \Strip{\Lam{x}{e}} &= \Lam{x}{\Strip{e}} \\
     \Strip{e_1(e_2)} &= (\Strip{e_1})(\Strip{e_2}) \\
     \Strip{\Nat{n}} &= \Strip{\Nat{b}} \\
     \Strip{e_1 + e_2} &= (\Strip{e_1}) + (\Strip{e_2}) \\
-    \Strip{\Filter{p}{a}{g}{e}} &= \Strip{e} \\
+    \Strip{\Filter{(p, a, g)}{e}} &= \Strip{e} \\
     \Strip{\Residue{a}{g}{l}{e}} &= \Strip{e}
   \end{aligned}
 \]
@@ -286,6 +394,8 @@
   } \qquad
 \end{mathpar}
 
+\mck{M-Lam doesn't allow \$e inside function bodies - is this intentional?}
+
 \fbox{\(\FInstruct{(p, a, g, l)}{d}{d'}\)} \(d\) is dynamically instructed to \(d'\).
 \begin{mathpar}
   \inferrule[FI-V]{
@@ -307,14 +417,13 @@
     \FInstruct{(p_0, a_0, g_0, l_0)}{d_0}{d} \\
     \FInstruct{(p, a, g, l_0 + 1)}{d}{d'}
   }{
-    \FInstruct{(p_0, a_0, g_0, l_0)}{\Filter{p}{a}{g}{d_0}}{\Filter{p}{a}{g}{d'}}
+    \FInstruct{(p_0, a_0, g_0, l_0)}{\Filter{(p, a, g)}{d_0}}{\Filter{(p, a, g)}{d'}}
   } \\
   \inferrule[FI-T]{
     \FInstruct{(p_0, a_0, g_0, l_0)}{d_0}{d} \\
   }{
     \FInstruct{(p_0, a_0, g_0, l_0)}{\Residue{a}{g}{l}{d_0}}{\Residue{a}{g}{l}{d'}}
   } \\
-  \text{\mck{Why are there `all's in the below instead of `a'?}}\\
   \inferrule[FI-Ap-Y]{
     \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
     \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
@@ -329,7 +438,6 @@
   }{
     \FInstruct{(p, a, g, l)}{d_1(d_2)}{d_1'(d_2')}
   } \\
-  \text{\mck{Why are there `all's in the below instead of `a'?}}\\
   \inferrule[FI-Add-Y]{
     \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
     \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
@@ -379,31 +487,31 @@
   \inferrule[A-Filter]{
     \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
   }{
-    \Analyze{(a, l)}{\Filter{p}{a}{g}{\mathcal{E}}}{\Filter{p}{a}{g}{\mathcal{E}'}}{a'}
+    \Analyze{(a, l)}{\Filter{(p, a, g)}{\mathcal{E}}}{\Filter{(p, a, g)}{\mathcal{E}'}}{a'}
   } \\
   \inferrule[A-Residue-One-Old]{
     l \le l_0 \\
     \Analyze{(a_0, l_0)}{\mathcal{E}}{\mathcal{E}'}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\FGOne}{l}{\mathcal{E}}}{\Residue{a}{\FGOne}{l}{\mathcal{E}'}}{a'}
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasOne}{l}{\mathcal{E}}}{\mathcal{E}'}{a'}
   } \\
   \inferrule[A-Residue-One-New]{
     l > l_0 \\
     \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\FGOne}{l}{\mathcal{E}}}{\Residue{a}{\FGOne}{l}{\mathcal{E}'}}{a'}
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasOne}{l}{\mathcal{E}}}{\mathcal{E}'}{a'}
   } \\
   \inferrule[A-Residue-All-Old]{
     l \le l_0 \\
     \Analyze{(a_0, l_0)}{\mathcal{E}}{\mathcal{E}'}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\FGAll}{l}{\mathcal{E}}}{\Residue{a}{\FGAll}{l}{\mathcal{E}'}}{a'}
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{\Residue{a}{\GasAll}{l}{\mathcal{E}'}}{a'}
   } \\
   \inferrule[A-Residue-All-New]{
     l > l_0 \\
     \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\FGAll}{l}{\mathcal{E}}}{\Residue{a}{\FGAll}{l}{\mathcal{E}'}}{a'}
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{\Residue{a}{\GasAll}{l}{\mathcal{E}'}}{a'}
   }
 \end{mathpar}
 
@@ -423,7 +531,7 @@
   \inferrule[FLRes-T]{
     \FTrans{d}{d'}
   }{
-    \FTrans{\Residue{a}{g}{d}}{\Residue{a}{g}{d'}}
+    \FTrans{\Residue{a}{g}{l}{e}}{\Residue{a}{g}{l}{e'}}
   } \\
   \inferrule[\textcolor{red}{FLRes-Inst}]{
     \Value{v}
@@ -439,28 +547,7 @@
 
 \mck{ok yeah it would be nice to have a progress property here but I guess we do need types for that...}
 
-\fbox{\(\FStep{(a, g)}{d}{d'}\)} Expression \(d\) steps to expression \(d'\).
-\begin{mathpar}
-  \inferrule[FS-Step]{
-    \FInstruct{(a, g, 0)}{d}{d_i} \\
-    \Decompose{d_i}{\mathcal{E}}{d_0} \\
-    \FTrans{d_0}{d_0'} \\
-    \Compose{d'}{\mathcal{E}}{d_0'}
-  }{
-    \FStep{(p, a, g)}{d}{d'}
-  } \\
-  \inferrule[FS-Skip]{
-    \FInstruct{(a, g, 0)}{d}{d_i} \\
-    \Decompose{d_i}{\mathcal{E}}{d_0} \\
-    \FTrans{d_0}{d_0'} \\
-    \Compose{d'}{\mathcal{E}}{d_0'} \\
-    \FStep{(a, g)}{d'}{d''}
-  }{
-    \FStep{(a, g)}{d}{d''}
-  }
-\end{mathpar}
 
-\mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
 
 \TODO{Properties}
 \\\\
