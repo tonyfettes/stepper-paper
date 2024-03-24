@@ -2,10 +2,9 @@
 
 In this section, we will discuss the semantics of the \emph{Filtered Stepper
 Calculus}. We first introduce the syntax of the language, then we discuss the
-the dynamics of the language, and finally we discuss the statics of the
-language. The static part is optional for understanding and implement the filtered
-stepper calculus, but is useful as a foundation to prove meta-theory theorems
-about the calculus, for example, \emph{progression} and \emph{preservation}.
+the dynamics of the language. Finally, we will discuss the optional part of the
+semantic, the statics of the language, and show that the calculus satisfies
+properties like progression and preservation.
 
 % \TODO{introduction to this section}
 
@@ -152,9 +151,7 @@ steps are hidden and is not visible to users.
 
 \mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
 
-\hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. However, we are reading the result of decomposition, not the rules above.}
-
-\hxf{This might also worth making a meta-theory theorem?}
+\hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. Instead, we are reading the result of decomposition.}
 
 \fbox{\(\FInstruct{(p, a, g, l)}{e}{e'}\)} \(e\) is dynamically instructed to \(e'\).
 \begin{mathpar}
@@ -287,7 +284,7 @@ steps are hidden and is not visible to users.
   \mid d(\mathcal{E})
   \mid \mathcal{E} + d
   \mid d + \mathcal{E}
-  \mid \Filter{(p, a, g)}{l}{\mathcal{E}}
+  \mid \Filter{f}{\mathcal{E}}
   \mid \Residue{a}{g}{l}{\mathcal{E}}
 \]
 
@@ -334,7 +331,7 @@ steps are hidden and is not visible to users.
   \end{aligned}
 \]
 
-\hxf{Do we use different notation for substitution into patterns}
+\hxf{Shall we use different notation for patterns?}
 
 % \TODO{swap order to [v/x]e}
 
@@ -364,11 +361,18 @@ steps are hidden and is not visible to users.
     \
   }{
     \Matches{\Nat{m}}{\Nat{m}}
-  }\qquad
+  }\\
+  \text{\hxf{I guess we still need to explicitly use equivalence here?}}\\
   \inferrule[M-Lam]{
-    \Lam{x}{e_p} \equiv_{\alpha} \Lam{y}{e_e}
+    \Lam{x}{e_p} \equiv \Lam{y}{e_e}
   }{
     \Matches{\Lam{x}{e_p}}{\Lam{y}{e_e}}
+  } \\
+  \text{\hxf{Or we can just write as if they're structurally equivalent?}}\\
+  \inferrule[M-Lam']{
+    \
+  }{
+    \Matches{\Lam{x}{e_p}}{\Lam{y}{e_p}}
   } \\
   \inferrule[M-Ap]{
     \Matches{p_1}{e_1} \\
