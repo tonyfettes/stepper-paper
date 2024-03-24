@@ -18,7 +18,7 @@
   basicstyle=\ttfamily\color{black},
   keywords={
     let, in, case, end, type,
-    eval, pause, hide, debug
+    eval, pause, hide, debug, filter, do,
   },
   keywordstyle=\bfseries\color{black},
   commentstyle=\color{gray},
@@ -38,6 +38,7 @@
 \DeclareMathSymbol{\Psi}{\mathalpha}{operators}{9}
 \DeclareMathSymbol{\Omega}{\mathalpha}{operators}{10}
 
+%% Kinds
 
 \DeclareMathOperator{\DefPat}{Pat}
 \DeclareMathOperator{\DefExp}{Exp}
@@ -52,32 +53,49 @@
 \DeclareMathOperator{\KeywordPause}{pause}
 \DeclareMathOperator{\KeywordDebug}{debug}
 \DeclareMathOperator{\KeywordResidue}{do}
-% \DeclareMathOperator{\Nat}{\mathsf{Nat}}
 
+%% Terms
+
+% Pat
+\newcommand{\PatExpr}{\mathtt{\$e}}
+\newcommand{\PatValue}{\mathtt{\$v}}
+
+% Act
+\newcommand{\ActSkip}{\mathsf{skip}}
+\newcommand{\ActStep}{\mathsf{step}}
+
+% Gas
+\newcommand{\GasOne}{\mathsf{one}}
+\newcommand{\GasAll}{\mathsf{all}}
+
+% Expr
 \newcommand{\Nat}[1]{\underline{#1}}
 \newcommand{\Lam}[2]{\lambda #1 . #2}
+
 \newcommand{\Filter}[2]{\KeywordFilter #1 ~\mathsf{in}~ #2}
 \newcommand{\FilterEval}[2]{\KeywordEval #1 ~\mathsf{in}~ #2}
 \newcommand{\FilterHide}[2]{\KeywordHide #1 ~\mathsf{in}~ #2}
 \newcommand{\FilterDebug}[2]{\KeywordDebug #1 ~\mathsf{in}~ #2}
 \newcommand{\FilterPause}[2]{\KeywordPause #1 ~\mathsf{in}~ #2}
+
 \newcommand{\Residue}[4]{\prescript{#1}{#3}{\langle} #4 \rangle^{#2}}
 \newcommand{\ResidueEval}[2]{\KeywordEval \# #1 ~\mathsf{in}~ #2}
 \newcommand{\ResidueHide}[2]{\KeywordHide \# #1 ~\mathsf{in}~ #2}
 \newcommand{\ResiduePause}[2]{\KeywordPause \# #1 ~\mathsf{in}~ #2}
 \newcommand{\ResidueDebug}[2]{\KeywordDebug \# #1 ~\mathsf{in}~ #2}
-\newcommand{\Value}[1]{#1~\mathsf{value}}
-\newcommand{\FEStep}[2]{#1 \mapsto #2}
+
+%% Functions
+
 \newcommand{\FSubst}[3]{[#1/#2] #3}
+\DeclareMathOperator{\Strip}{strip}
+\DeclareMathOperator{\Decay}{decay}
+
+%% Judgments
 
 \newcommand{\FCMark}{\circ}
 
-\newcommand{\ActSkip}{\mathsf{skip}}
-\newcommand{\ActStep}{\mathsf{step}}
-\newcommand{\GasOne}{\mathsf{one}}
-\newcommand{\GasAll}{\mathsf{all}}
-
-\DeclareMathOperator{\Strip}{strip}
+\newcommand{\Value}[1]{#1~\mathsf{value}}
+\newcommand{\FEStep}[2]{#1 \mapsto #2}
 
 \newcommand{\Decompose}[3]{#1 = #2 \{ #3 \}}
 \newcommand{\Compose}[3]{#1 = #2 \{ #3 \}}
@@ -93,8 +111,9 @@
 \newcommand{\FPatMatchesCtx}[3]{#1 \FPatMatchesCtxOpL #2 \{ #3 \}}
 
 \newcommand{\FInstruct}[3]{#1 \vdash #2 \rightsquigarrow #3}
+\newcommand{\Instruct}[6]{(#1, #2, #3, #4) \vdash #5 \rightsquigarrow #6}
 
-\newcommand{\Analyze}[4]{#1 \vdash #2 \rightsquigarrow #3 \dashv #4}
+\newcommand{\Analyze}[3]{#1 \vdash #2 \dashv #3}
 
 \newcommand{\FTrans}[2]{#1 \rightarrow #2}
 

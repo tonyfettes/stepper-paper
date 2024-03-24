@@ -21,15 +21,15 @@ properties like progression and preservation.
                    &\mid     & \Filter{f}{e} \\
                    &\mid     & \Residue{a}{g}{l}{e} \\
       \DefPat p    &\Coloneqq& x \mid p(p) \mid \Lam{x}{p} \mid p + p \mid \Nat{n} \\
-                   &\mid     & \$\mathtt{e} \\
-                   &\mid     & \$\mathtt{v} \\
+                   &\mid     & \PatExpr \\
+                   &\mid     & \PatValue \\
     \end{array}
   \end{equation*}
   \caption{Syntax of Filtered Stepper Calculus. Here, $n$ ranges over numbers, $x$ over variables, and $l$ over priorities, which are natural numbers.}
   \label{fig:filter-syntax}
 \end{figure}
 
-\TODO{define macro for wildcard patterns}
+% \TODO{define macro for wildcard patterns}
 
 % \TODO{overview of syntax}
 
@@ -58,46 +58,6 @@ store the residue of the effect of a filter. It has four components, an action
 gas are the same as the ones in a filter. The priority is a natural number
 indicating the priority of the residue.
 
-% \fbox{\(\DefAct a\)} Action \(a\) of a filter
-% \[
-%   \DefAct a \Coloneqq \ActSkip \mid \ActStep
-% \]
-
-% \fbox{\(\DefGas g\)} Gas \(g\) of a filter.
-% \[
-%   \DefGas g \Coloneqq \GasOne \mid \GasAll
-% \]
-
-% \fbox{\(\DefExp d\)} Expression \(d\).
-% \[
-%   \DefExp d \Coloneqq x \mid d(d) \mid \Lam{x}{d} \mid d + d \mid \Nat{n} \mid \Filter{(p, a, g)}{d} \mid \Residue{a}{g}{l}{d}
-% \]
-
-% \fbox{\(\DefVal d\)} Value \(v\).
-% \[
-%   \DefVal v \Coloneqq \Lam{x}{d} \mid \Nat{n}
-% \]
-
-% \mck{I added a value thing here but we should probably actually define it as a judgement instead.}
-
-% \mck{Maybe replace $\Residue{a}{g}{l}{\mathcal{E}}$ with $\Residue{a}{\GasAll}{l}{\mathcal{E}}$ because only $\GasAll$ is possible?}
-
-% \fbox{\(\DefPat p\)} Pattern \(p\).
-% \[
-%   \DefPat p \Coloneqq \$e \mid \$v \mid x \mid p(p) \mid \Lam{x}{d} \mid p + p \mid \Nat{n}
-% \]
-
-% \mck{The $\lambda \$x. $ form actually isn't necessary because we use alpha-equivalence later.}
-
-% \fbox{\(\DefFilter f\)} Filter \(f\).
-% \[
-%   \DefFilter f = (p, a, g)
-% \]
-
-%\TODO{change notation of filter to use $f$}
-
-%\TODO{change notation for do to be more compact}
-
 \subsection{Contextual Dynamics}
 
 There are two main operations in our semantics, one is to \emph{skip} the
@@ -115,67 +75,125 @@ steps are hidden and is not visible to users.
 
 \TODO{motivate the two rules}
 
-Consider the example from 
-
-\begin{lstlisting}
-eval 1 + 2 + 3 + 4 in 
-pause 3 + 3 + 4 in 
+Consider the example from
+\begin{lstlisting}[language=hazel]
+eval 1 + 2 + 3 + 4 in
+pause 3 + 3 + 4 in
 1 + 2 + 3 + 4
 \end{lstlisting}
 
 This turns into the following in the calculus:
-\begin{lstlisting}
+\begin{lstlisting}[language=hazel]
 filter (1 + 2 + 3 + 4, skip, all) in
-filter (3 + 3 + 4, step, one) in 
+filter (3 + 3 + 4, step, one) in
 1 + 2 + 3 + 4
 \end{lstlisting}
 
 \begin{enumerate}
-    \item Instrumentation: insert residues, initially assuming the default of stepping every expression one step.
-        \begin{lstlisting}
-          filter (1 + 2 + 3 + 4, skip, all) in
-          filter (3 + 3 + 4, step, one) in 
-          (step, 0)<(skip, 1)<((1 + 2) + 3) + 4>^all>^one
-        \end{lstlisting}
-    \item Decomposition: Decompose into an evaluation context and selected expression.
-       eval context: 
-       \begin{lstlisting}
-          filter (1 + 2 + 3 + 4, skip, all) in
-          filter (3 + 3 + 4, step, one) in 
-          (step, 0)<(skip, 1)<((o) + 3) + 4>^all>^one
-        \end{lstlisting}
-        selected expression is \lstinline{1 + 2}
-    \item Action Selection: Select an action from the evaluation context, and remove new one-step residues. \TODO{make removal of one-step residues a separate operation}
-        selected action: skip
-        removing the one-step residues leaves us with:
-        \begin{lstlisting}
-          filter (1 + 2 + 3 + 4, skip, all) in
-          filter (3 + 3 + 4, step, one) in 
-          (skip, 1)<((o) + 3) + 4>^all
-        \end{lstlisting}
-    \item Instruction Transition: In each case, we take a single instruction transition.
-    \item Recomposition: Recompose into a new expression, $e_1$.
-    \item If the selected action was step, then we finish with $e_1$ (rule S-Step)
-    \item If the selected action was skip, then we recursively continue stepping.
+  \item Instrumentation: At this step, we transverse the expression recursively
+    and collect filters we have seen. Then for each sub-expression, we test
+    if the sub-expression matches any of the filters we have seen. If it does,
+    we insert a residue expression with the filter information around the matched
+    sub-expression.
+
+    If we start with an empty set, we might end up with a
+    empty matching result and the stepper will have no clue what kind of action
+    to take. Therefore, we set the default behavior to be stepping through the evaluation of every expression.
+
+    Here, we apply two filters to the expression \(1 + 2 + 3 + 4\), one is
+    \(\Filter{1 + 2 + 3 + 4}{\ActSkip, \GasAll}\), the other is \(\Filter{3 + 3
+    + 4}{\ActStep, \GasOne}\). During the application of the first filter, we
+    find out that the sub-expression \(1 + 2 + 3 + 4\) matches the pattern \(1 +
+    2 + 3 + 4\), so we insert a residue expression \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\)
+    around the sub-expression, getting instrumented expression as:
+    \begin{lstlisting}[language=hazel]
+      filter ($e, pause, one) in
+      filter (1 + 2 + 3 + 4, skip, all) in
+      filter (3 + 3 + 4, step, one) in
+      (pause, 0)<
+        (skip, 1)<
+          (pause, 0)<(pause, 0)<1 + 2>^one + 3>^one + 4
+        >^all
+      >^one
+    \end{lstlisting}
+
+    However, during the application of the second filter, there is no sub-expression
+    that matches the pattern \(3 + 3 + 4\), so no residue expression is inserted
+    around the sub-expression. The instrumented expression remains the same.
+  \item Decomposition: The expression is decomposed into an evaluation context
+    and selected expression. The instrumented expression from last
+    step can be decomposed into an evaluation context like this:
+    \begin{lstlisting}[language=hazel]
+      filter (1 + 2 + 3 + 4, skip, all) in
+      filter (3 + 3 + 4, step, one) in
+      (pause, 0)<
+        (skip, 1)<
+          (pause, 0)<(pause, 0)<(*@\(\circ\)@*)>^one + 3>^one + 4
+        >^all
+      >^one
+    \end{lstlisting}
+    and a selected expression \lstinline{1 + 2}
+  \item Action Selection:
+    Select an action from the evaluation context. The action that is closer
+    to the selected expression, and with the highest priority is selected. In
+    this case, the action \(\ActSkip\) is selected, and the expression is kept
+    the same.
+  \item Residue removal: The residue expression that has life-time of one is
+    removed from the expression. The expression after the removal of the residue
+    expression is:
+    \begin{lstlisting}[language=hazel]
+      filter (1 + 2 + 3 + 4, skip, all) in
+      filter (3 + 3 + 4, step, one) in
+      (skip, 1)<((*@\(\circ\)@*) + 3) + 4>^all
+    \end{lstlisting}
+  \item Instruction Transition: The selected expression is instruction-transitioned
+    to a new expression. In this case, the selected expression is \(1 + 2\),
+    which is instruction-transitioned to \(3\).
+
+  \item Recomposition: When the selected-expression is instruction-transitioned
+    to a new expression, we need to recompose the transitioned selected
+    expression with evaluation context to get the updated expression. The
+    recomposed expression is:
+    \begin{lstlisting}[language=hazel]
+      filter (1 + 2 + 3 + 4, skip, all) in
+      filter (3 + 3 + 4, step, one) in
+      (skip, 1)<3 + 3 + 4>^all
+    \end{lstlisting}
+
+  \item If the selected expression (before instruction-transition) is a filter
+    expression, i.e. it is either of form \(\Filter{f}{e}\) or
+    \(\Residue{a}{g}{l}{e}\). Then the stepper will skip the step, by directly
+    going to the next step. This helps to hide the filter expressions from the
+    user.
+
+  \item Otherwise, if the action is \(\ActStep\), then the stepper pause at this
+    step exhibiting the evaluating context and the selected expression to user.
+
+  \item If the action is \(\ActSkip\), then the stepper will skip the selected
+    expression and continue stepping.
+
+    In this case, the selected expression is \(1 + 2\), and the
+    selected action is \(\ActSkip\), so the stepper will skip this step, which is
+    calculating the value of \(1 + 2\) to be \(3\).
 \end{enumerate}
-
-
 
 \fbox{\(\RuleStep{e}{e'}\)} Expression \(e\) steps to expression \(e'\).
 \begin{mathpar}
   \inferrule[S-Step]{
-    \FInstruct{(\ActStep, \GasOne, 0)}{e}{e_i} \\
+    \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\mathcal{E}_1}{\ActStep} \\
+    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \\
+    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
     \FTrans{e_0}{e_t} \\
     \Compose{e_1}{\mathcal{E}_1}{e_t}
   }{
     \RuleStep{e}{e_1}
   } \\
   \inferrule[S-Skip]{
-    \FInstruct{(\ActStep, \GasOne, 0)}{e}{e_i} \\
+    \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\mathcal{E}_1}{\ActSkip} \\
+    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \\
+    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
     \FTrans{e_0}{e_t} \\
     \Compose{e_1}{\mathcal{E}_1}{e_t} \\
     \RuleStep{e_1}{e_1'}
@@ -184,9 +202,10 @@ filter (3 + 3 + 4, step, one) in
   } \\
   \text{\hxf{I add a new rule here, so that filters can be properly eliminated.}}\\
   \inferrule[S-Filter]{
-    \FInstruct{(\ActStep, \GasOne, 0)}{e}{e_i} \\
+    \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{\Filter{f}{e_0}} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\mathcal{E}_1}{a} \\
+    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{a} \\
+    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
     \FTrans{e_0}{e_t} \\
     \Compose{e_1}{\mathcal{E}_1}{e_t} \\
     \RuleStep{e_1}{e_1'}
@@ -197,12 +216,14 @@ filter (3 + 3 + 4, step, one) in
 
 % \TODO{hard code defaults instead of making them part of the judgement}
 
-\TODO{add wildcard to the instrumentation call}
+% \TODO{add wildcard to the instrumentation call}
 
 \TODO{add an example demonstrating why we need priorities}
-\begin{lstlisting}
-    step 1 + 2 in
-skip 1 + 2 + 3 in
+
+\subsubsection{Why we need prioritites}
+\begin{lstlisting}[language=hazel]
+pause 1 + 2 in
+eval 1 + 2 + 3 in
 1 + 2 + 3
 \end{lstlisting}
 
@@ -210,22 +231,22 @@ skip 1 + 2 + 3 in
 
 \hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. Instead, we are reading the result of decomposition.}
 
-\fbox{\(\FInstruct{(p, a, g, l)}{e}{e'}\)} \(e\) is dynamically instructed to \(e'\).
+\fbox{\(\Instruct{p}{a}{g}{l}{e}{e'}\)} \(e\) is dynamically instructed to \(e'\).
 \begin{mathpar}
   \inferrule[I-V]{
     \Value{v}
   }{
-    \FInstruct{(p, a, g, l)}{v}{v}
+    \Instruct{p}{a}{g}{l}{v}{v}
   } \\
   \inferrule[I-Var-Y]{
     \FPatMatchesExp{p}{x}
   }{
-    \FInstruct{(p, a, g, l)}{x}{\Residue{a}{g}{l}{x}}
+    \Instruct{p}{a}{g}{l}{x}{\Residue{a}{g}{l}{x}}
   } \qquad
   \inferrule[I-Var-N]{
     \FPatNotMatchesExp{p}{x}
   }{
-    \FInstruct{(p, a, g, l)}{x}{x}
+    \Instruct{p}{a}{g}{l}{x}{x}
   } \\
   \inferrule[I-Filter]{
     \FInstruct{(p_0, a_0, g_0, l_0)}{e_0}{e} \\
@@ -239,32 +260,32 @@ skip 1 + 2 + 3 in
     \FInstruct{(p_0, a_0, g_0, l_0)}{\Residue{a}{g}{l}{e_0}}{\Residue{a}{g}{l}{e}}
   } \\
   \inferrule[I-Ap-Y]{
-    \FInstruct{(p, a, g, l)}{e_1}{e_1'} \\
-    \FInstruct{(p, a, g, l)}{e_2}{e_2'} \\
+    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
+    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
     \FPatMatchesExp{p}{e_1(e_2)}
   }{
-    \FInstruct{(p, a, g, l)}{e_1(e_2)}{\Residue{a}{g}{l}{e_1'(e_2')}}
+    \Instruct{p}{a}{g}{l}{e_1(e_2)}{\Residue{a}{g}{l}{e_1'(e_2')}}
   } \\
   \inferrule[I-Ap-N]{
-    \FInstruct{(p, a, g, l)}{e_1}{e_1'} \\
-    \FInstruct{(p, a, g, l)}{e_2}{e_2'} \\
+    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
+    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
     \FPatNotMatchesExp{p}{e_1(e_2)}
   }{
-    \FInstruct{(p, a, g, l)}{e_1(e_2)}{e_1'(e_2')}
+    \Instruct{p}{a}{g}{l}{e_1(e_2)}{e_1'(e_2')}
   } \\
   \inferrule[I-Add-Y]{
-    \FInstruct{(p, a, g, l)}{e_1}{e_1'} \\
-    \FInstruct{(p, a, g, l)}{e_2}{e_2'} \\
+    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
+    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
     \FPatMatchesExp{p}{e_1 + e_2}
   }{
-    \FInstruct{(p, a, g, l)}{e_1(e_2)}{\Residue{a}{g}{l}{e_1' + e_2'}}
+    \Instruct{p}{a}{g}{l}{e_1(e_2)}{\Residue{a}{g}{l}{e_1' + e_2'}}
   } \\
   \inferrule[I-Add-N]{
-    \FInstruct{(p, a, g, l)}{e_1}{e_1'} \\
-    \FInstruct{(p, a, g, l)}{e_2}{e_2'} \\
+    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
+    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
     \FPatNotMatchesExp{p}{e_1 + e_2}
   }{
-    \FInstruct{(p, a, g, l)}{e_1(e_2)}{e_1' + e_2'}
+    \Instruct{p}{a}{g}{l}{e_1(e_2)}{e_1' + e_2'}
   }
 \end{mathpar}
 
@@ -276,60 +297,74 @@ skip 1 + 2 + 3 in
 
 \hxf{Yeah it would be much nicer to avoid the duplication of do statements. We can to some ad-hoc fusing of do-statements same effect \& priorties, probably utilmately we want the instrumentation to be Idempotent.}
 
-\fbox{\(\Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}\)} Under the filter environment of \((a, l)\), the context \(\mathcal{E}\) is transitioned to \(\mathcal{E}'\) and the action \(a'\) is returned.
+\fbox{\(\Decay{\mathcal{E}} = \mathcal{E}'\)} Evaluation Context \(\mathcal{E}\) decays to context \(\mathcal{E}'\).
+\[
+  \begin{aligned}
+    \Decay{x} &= x \\
+    \Decay{\Lam{x}{e}} &= \Lam{x}{\Decay{e}} \\
+    \Decay{e_1(e_2)} &= (\Decay{e_1})(\Decay{e_2}) \\
+    \Decay{\Nat{n}} &= \Decay{\Nat{n}} \\
+    \Decay{e_1 + e_2} &= (\Decay{e_1}) + (\Decay{e_2}) \\
+    \Decay{\Filter{(p, a, g)}{e}} &= \Filter{(p, a, g)}{\Decay{e}} \\
+    \Decay{\Residue{a}{\GasOne}{l}{e}} &= \Decay{e} \\
+    \Decay{\Residue{a}{\GasAll}{l}{e}} &= \Residue{a}{\GasAll}{l}{\Decay{e}}
+  \end{aligned}
+\]
+
+\fbox{\(\Analyze{(a, l)}{\mathcal{E}}{a'}\)} Under the filter environment of \((a, l)\), the context \(\mathcal{E}\) is transitioned to \(\mathcal{E}'\) and the action \(a'\) is returned.
 \begin{mathpar}
   \inferrule[A-Var]{
   }{
-    \Analyze{(a, l)}{\circ}{\circ}{a}
+    \Analyze{(a, l)}{\circ}{a}
   } \\
   \inferrule[A-Ap-L]{
-    \Analyze{(a, l)}{\mathcal{E}_1}{\mathcal{E}_1'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}_1}{a'}
   }{
-    \Analyze{(a, l)}{\mathcal{E}_1(e)}{\mathcal{E}_1'(e)}{a'}
+    \Analyze{(a, l)}{\mathcal{E}_1(e)}{a'}
   } \qquad
   \inferrule[A-Ap-R]{
-    \Analyze{(a, l)}{\mathcal{E}_2}{\mathcal{E}_2'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}_2}{a'}
   }{
-    \Analyze{(a, l)}{e_1(\mathcal{E}_2)}{e_1(\mathcal{E}_2')}{a'}
+    \Analyze{(a, l)}{e_1(\mathcal{E}_2)}{a'}
   } \\
   \inferrule[A-Add-L]{
-    \Analyze{(a, l)}{\mathcal{E}_1}{\mathcal{E}_1'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}_1}{a'}
   }{
-    \Analyze{(a, l)}{\mathcal{E}_1 + e}{\mathcal{E}_1' + e}{a'}
+    \Analyze{(a, l)}{\mathcal{E}_1 + e}{a'}
   } \qquad
   \inferrule[A-Add-R]{
-    \Analyze{(a, l)}{\mathcal{E}_2}{\mathcal{E}_2'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}_2}{a'}
   }{
-    \Analyze{(a, l)}{e_1 + \mathcal{E}_2}{e_1 + \mathcal{E}_2'}{a'}
+    \Analyze{(a, l)}{e_1 + \mathcal{E}_2}{a'}
   } \\
   \inferrule[A-Filter]{
-    \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}}{a'}
   }{
-    \Analyze{(a, l)}{\Filter{f}{\mathcal{E}}}{\Filter{f}{\mathcal{E}'}}{a'}
+    \Analyze{(a, l)}{\Filter{f}{\mathcal{E}}}{a'}
   } \\
   \inferrule[A-Residue-One-Old]{
     l \le l_0 \\
-    \Analyze{(a_0, l_0)}{\mathcal{E}}{\mathcal{E}'}{a'}
+    \Analyze{(a_0, l_0)}{\mathcal{E}}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\GasOne}{l}{\mathcal{E}}}{\mathcal{E}'}{a'}
-  } \\
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasOne}{l}{\mathcal{E}}}{a'}
+  } \qquad
   \inferrule[A-Residue-One-New]{
     l > l_0 \\
-    \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\GasOne}{l}{\mathcal{E}}}{\mathcal{E}'}{a'}
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasOne}{l}{\mathcal{E}}}{a'}
   } \\
   \inferrule[A-Residue-All-Old]{
     l \le l_0 \\
-    \Analyze{(a_0, l_0)}{\mathcal{E}}{\mathcal{E}'}{a'}
+    \Analyze{(a_0, l_0)}{\mathcal{E}}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{\Residue{a}{\GasAll}{l}{\mathcal{E}'}}{a'}
-  } \\
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{a'}
+  } \qquad
   \inferrule[A-Residue-All-New]{
     l > l_0 \\
-    \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
+    \Analyze{(a, l)}{\mathcal{E}}{a'}
   }{
-    \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{\Residue{a}{\GasAll}{l}{\mathcal{E}'}}{a'}
+    \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{a'}
   }
 \end{mathpar}
 
@@ -691,7 +726,7 @@ skip 1 + 2 + 3 in
 \\\\
 Conjecture: Idempotence of Instrumentation (Instrumenting twice should have the same effect as instrumenting once)
 
-$\FInstruct{(p, a, g, l)}{e}{e'} \Rightarrow \FInstruct{(p, a, g, l)}{e'}{e''} \Rightarrow e' = e''$
+$\Instruct{p}{a}{g}{l}{e}{e'} \Rightarrow \Instruct{p}{a}{g}{l}{e'}{e''} \Rightarrow e' = e''$
 
 \mck{This conjecture is actually not true, because instrumentation always adds more do statements, even if they're already there.}
 \\\\
