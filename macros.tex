@@ -53,7 +53,7 @@
 \newcommand{\Filter}[4]{\KeywordFilter #1 ~\mathsf{do}~ #2 ~\mathsf{for}~ #3 ~\mathsf{in}~ #4}
 \newcommand{\Residue}[4]{\mathsf{do}~ #1 ~\mathsf{for}~ #2 ~\mathsf{at}~ #3 ~\mathsf{in}~ #4}
 
-\newcommand{\FValue}[1]{#1~\mathsf{value}}
+\newcommand{\Value}[1]{#1~\mathsf{value}}
 \newcommand{\FEStep}[2]{#1 \mapsto #2}
 \newcommand{\FSubst}[3]{[#1/#2] #3}
 
@@ -64,9 +64,12 @@
 \newcommand{\FGOne}{\mathsf{one}}
 \newcommand{\FGAll}{\mathsf{all}}
 
+\DeclareMathOperator{\Strip}{strip}
+
 \newcommand{\Decompose}[3]{#1 \Rightarrow #2 \{ #3 \}}
 \newcommand{\Compose}[3]{#1 \Leftarrow #2 \{ #3 \}}
 
+\newcommand{\Matches}[2]{#1 \mathrel{\mathop{\triangleright}} #2}
 \newcommand{\FPatMatchesExpOp}{\mathrel{\mathop{\triangleright}}}
 \newcommand{\FPatMatchesExp}[2]{#1 \FPatMatchesExpOp #2}
 \newcommand{\FPatNotMatchesExpOp}{\mathrel{\mathop{\not\triangleright}}}

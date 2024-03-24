@@ -50,15 +50,15 @@
 
 \subsection{Dynamics}
 
-\fbox{\(\FValue e\)} Expression \(e\) is a value.
+\fbox{\(\Value e\)} Expression \(e\) is a value.
 \begin{mathpar}
   \inferrule[V-Lam]{
   }{
-    \FValue{\Lam{x}{d}}
+    \Value{\Lam{x}{d}}
   } \qquad
   \inferrule[V-Nat]{
   }{
-    \FValue{\Nat{n}}
+    \Value{\Nat{n}}
   }
 \end{mathpar}
 
@@ -107,115 +107,189 @@
   }{
     \Decompose{x}{\FCMark}{x}
   } \\
-  \inferrule[D-Residue-\(\rulexi\)]{
+  \inferrule[D-Residue-I]{
     \Decompose{e}{\mathcal{E}}{e'}
   }{
     \Decompose{\Residue{a}{g}{l}{e}}{\mathcal{E}}{\Residue{a}{g}{l}{e'}}
   } \\
-  \inferrule[D-Residue-\(\beta\)]{
-    \FValue{v}
+  \inferrule[D-Residue-E]{
+    \Value{v}
   }{
     \Decompose{\Residue{a}{g}{l}{v}}{\circ}{\Residue{a}{g}{l}{v}}
+  } \\
+  \inferrule[D-Filter-I]{
+    \Decompose{e}{\mathcal{E}}{e'}
+  }{
+    \Decompose{\Filter{p}{a}{g}{e}}{\mathcal{E}}{\Filter{p}{a}{g}{e'}}
+  } \\
+  \inferrule[D-Filter-E]{
+    \Value{v}
+  }{
+    \Decompose{\Residue{p}{a}{g}{v}}{\circ}{\Residue{p}{a}{g}{v}}
   } \\
   \inferrule[D-Ap-L]{
     \Decompose{d_1}{\mathcal{E}_1}{d_1'}
   }{
     \Decompose{d_1(d_2)}{\mathcal{E}_1(d_2)}{d_1'}
   } \qquad
-  \inferrule[FC-Ap-R]{
-    \FValue{d_1} \\
+  \inferrule[D-Ap-R]{
+    \Value{d_1} \\
     \Decompose{d_2}{\mathcal{E}_2}{d_2'}
   }{
     \Decompose{d_1(d_2)}{d_1(\mathcal{E}_2)}{d_2'}
+  } \qquad
+  \inferrule[D-Ap-E]{
+    \Value{e_1} \\
+    \Value{e_2}
+  }{
+    \Decompose{e_1(e_2)}{\circ}{e_1(e_2)}
   } \\
-  \inferrule[FC-Add-L]{
+  \inferrule[D-Add-L]{
     \Decompose{d_1}{\mathcal{E}_1}{d_1'}
   }{
     \Decompose{d_1 + d_2}{\mathcal{E}_1 + d_2}{d_1'}
   } \qquad
-  \inferrule[FC-Add-R]{
-    \FValue{d_1} \\
+  \inferrule[D-Add-R]{
+    \Value{d_1} \\
     \Decompose{d_2}{\mathcal{E}_2}{d_2'}
   }{
     \Decompose{d_1 + d_2}{d_1 + \mathcal{E}_2}{d_2'}
-  } \\
+  } \qquad
+  \inferrule[D-Add-E]{
+    \Value{e_1} \\
+    \Value{e_2}
+  }{
+    \Decompose{e_1 + e_2}{\circ}{e_1 + e_2}
+  }
 \end{mathpar}
 
 \mck{The last four rules seem to specify an evaluation order - is this desired behaviour? I thought we were going to mention the nondeterminism somewhere in the text}
 
 \mck{Todo: remove the unused `output' g from the above - I think we can also remove the `input` g too?}
 
-\fbox{\(\FPatMatchesExp{p}{d}\)} means that pattern \(p\) matches expression \(d\).
+\fbox{\(\Compose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
-  \inferrule[FPME-Ap]{
-    \FPatMatchesExp{p_1}{d_1} \\
-    \FPatMatchesExp{p_2}{d_2}
+  \inferrule[C-Top]{
+    \ 
   }{
-    \FPatMatchesExp{p_1(p_2)}{d_1(d_2)}
+    \Compose{e}{\circ}{e}
   } \qquad
-  \inferrule[FPME-Add]{
-    \FPatMatchesExp{p_1}{d_1} \\
-    \FPatMatchesExp{p_2}{d_2}
+  \inferrule[C-Ap-L]{
+    \Compose{e_l}{\mathcal{E}}{e}
   }{
-    \FPatMatchesExp{p_1 + p_2}{d_1 + d_2}
+    \Compose{e_l(e_r)}{\mathcal{E}(e_r)}{e}
   } \qquad
-  \inferrule[FPME-Lam]{
-    \Lam{x}{d_p} \equiv_{\alpha} \Lam{y}{d_p'}\\
-    \FPatMatchesExp{d_p'}{d_d}
+  \inferrule[C-Ap-R]{
+    \Compose{e_r}{\mathcal{E}}{e}
   }{
-    \FPatMatchesExp{\Lam{x}{d_p}}{\Lam{y}{d_d}}
+    \Compose{e_l(e_r)}{e_l(\mathcal{E})}{e}
   } \\
-  \inferrule[FPME-Var]{
-    x = y
+  \inferrule[C-Add-L]{
+    \Compose{e_l}{\mathcal{E}}{e}
   }{
-    \FPatMatchesExp{x}{y}
-  }\qquad
-  \inferrule[FPME-Nat]{
-    m = n
-  }{
-    \FPatMatchesExp{\Nat{m}}{\Nat{n}}
-  }\qquad
-  \inferrule[FPME-Expr]{\ }{
-    \FPatMatchesExp{\$e}{d}
+    \Compose{e_l + e_r}{\mathcal{E} + e_r}{e}
   } \qquad
-  \inferrule[FPME-Value]{\FValue{d}}{
-    \FPatMatchesExp{\$v}{d}
+  \inferrule[C-Add-R]{
+    \Compose{e_r}{\mathcal{E}}{e}
+  }{
+    \Compose{e_l + e_r}{e_l + \mathcal{E}}{e}
+  } \\
+  \inferrule[C-Filter]{
+    \Compose{e'}{\mathcal{E}}{e}
+  }{
+    \Compose{\Filter{p}{a}{g}{e'}}{\Filter{p}{a}{g}{\mathcal{E}}}{e}
+  } \\
+  \inferrule[C-Residue]{
+    \Compose{e'}{\mathcal{E}}{e}
+  }{
+    \Compose{\Residue{a}{g}{l}{e'}}{\Residue{a}{g}{l}{\mathcal{E}}}{e}
   }
 \end{mathpar}
 
-% \fbox{\(\FPatMatchesCtx{f}{\mathcal{E}}{d}\)} Pattern \(f\) matches \(\mathcal{E}\) and \(d\).
-% \begin{mathpar}
-%   \inferrule[FMC-Mark]{
-%     \FPatMatchesExp{p}{d}
-%   }{
-%     \FPatMatchesCtx{p}{\FCMark}{d}
-%   } \\
-%   \inferrule[FMC-App-L-Y]{
-%     \FPatMatchesExp{p}{d_1}
-%   }{
-%     \FPatMatchesCtx{p}{\mathcal{E}_1(d_2)}{d_1}
-%   } \qquad
-%   \inferrule[FMC-App-L-N]{
-%     \FPatMatchesCtx{p}{\mathcal{E}_1}{d_1}
-%   }{
-%     \FPatMatchesCtx{p}{\mathcal{E}_1(d_2)}{d_1}
-%   } \\
-%   \inferrule[FMC-App-R-Y]{
-%     \FPatMatchesExp{p}{d_1}
-%   }{
-%     \FPatMatchesCtx{p}{d_1(\mathcal{E}_2)}{d_1}
-%   } \qquad
-%   \inferrule[FMC-App-R-N]{
-%     \FPatMatchesCtx{p}{\mathcal{E}_2}{d_2}
-%   }{
-%     \FPatMatchesCtx{p}{d_1(\mathcal{E}_2)}{d_2}
-%   }
-% \end{mathpar}
+\fbox{\(e_1 \equiv_\alpha e_2\)} \(e_1\) is alpha-equivalent to \(e_2\).
+\begin{mathpar}
+  \inferrule[\(\alpha\)-Var]{
+  }{
+    x \equiv_\alpha x
+  } \qquad
+  \inferrule[\(\alpha\)-Lam]{
+    e_1 \equiv_\alpha [x_2/x_1](e_2)
+  }{
+    \Lam{x_1}{\tau_1}{e_1} \equiv_\alpha \Lam{x_2}{\tau_2}{e_2}
+  } \\
+  \inferrule[\(\alpha\)-Ap]{
+    e_1 \equiv_\alpha e_3 \\
+    e_2 \equiv_\alpha e_4
+  }{
+    e_1(e_2) \equiv_\alpha e_3(e_4)
+  } \qquad
+  \inferrule[\(\alpha\)-Add]{
+    e_1 \equiv_\alpha e_3 \\
+    e_2 \equiv_\alpha e_4
+  }{
+    e_1 + e_2 \equiv_\alpha e_3 + e_4
+  } \\
+  \inferrule[\(\alpha\)-Filter]{
+    e_1 \equiv_\alpha e_2
+  }{
+    \Filter{p}{a}{g}{e_1} \equiv_\alpha \Filter{p}{a}{g}{e_2}
+  } \\
+  \inferrule[\(\alpha\)-Residue]{
+    e_1 \equiv_\alpha e_2
+  }{
+    \Residue{a}{g}{l}{e_1} \equiv_\alpha \Residue{a}{g}{l}{e_2}
+  }
+\end{mathpar}
+
+\fbox{\(\Strip{e} = {e'}\)} Strip expression \(e\) to get expression \(e'\).
+\[
+  \begin{aligned}
+    \Strip{x} &= x \\
+    \Strip{\Lam{x}{\tau}{e}} &= \Lam{x}{\tau}{\Strip{e}} \\
+    \Strip{e_1(e_2)} &= (\Strip{e_1})(\Strip{e_2}) \\
+    \Strip{\Nat{n}} &= \Strip{\Nat{b}} \\
+    \Strip{e_1 + e_2} &= (\Strip{e_1}) + (\Strip{e_2}) \\
+    \Strip{\Filter{p}{a}{g}{e}} &= \Strip{e} \\
+    \Strip{\Residue{a}{g}{l}{e}} &= \Strip{e}
+  \end{aligned}
+\]
+
+\fbox{\(\Matches{p}{d}\)} means that pattern \(p\) matches expression \(d\).
+\begin{mathpar}
+  \inferrule[M-All]{\ }{
+    \Matches{\$e}{d}
+  } \qquad
+  \inferrule[M-Val]{\Value{v}}{
+    \Matches{\$v}{v}
+  } \\
+  \inferrule[M-Nat]{
+    m = n
+  }{
+    \Matches{\Nat{m}}{\Nat{n}}
+  }\qquad
+  \inferrule[M-Lam]{
+    \Lam{x}{\tau_p}{e_p} \equiv_{\alpha} \Lam{y}{\tau_e}{e_e}
+  }{
+    \Matches{\Lam{x}{\tau_p}{e_p}}{\Lam{y}{\tau_e}{e_e}}
+  } \\
+  \inferrule[M-Ap]{
+    \Matches{p_1}{d_1} \\
+    \Matches{p_2}{d_2}
+  }{
+    \Matches{p_1(p_2)}{d_1(d_2)}
+  } \qquad
+  \inferrule[M-Add]{
+    \Matches{p_1}{d_1} \\
+    \Matches{p_2}{d_2}
+  }{
+    \Matches{p_1 + p_2}{d_1 + d_2}
+  } \qquad
+\end{mathpar}
 
 \fbox{\(\FInstruct{(p, a, g, l)}{d}{d'}\)} \(d\) is dynamically instructed to \(d'\).
 \begin{mathpar}
   \inferrule[FI-V]{
-    \FValue{d}
+    \Value{d}
   }{
     \FInstruct{(p, a, g, l)}{d}{d}
   } \\
@@ -279,7 +353,7 @@
 \fbox{\(\FTrans{d}{d'}\)} \(d\) takes an transition to \(d'\).
 \begin{mathpar}
   \inferrule[FTLam]{
-    \FValue{d_2}
+    \Value{d_2}
   }{
     \FTrans{\Lam{x}{d_1}(d_2)}{\FSubst{d_2}{x}{d_1}}
   } \\
@@ -295,12 +369,12 @@
     \FTrans{\Residue{a}{g}{d}}{\Residue{a}{g}{d'}}
   } \\
   \inferrule[\textcolor{red}{FLRes-Inst}]{
-    \FValue{v}
+    \Value{v}
   }{
     \FTrans{\Residue{a}{g}{l}{d}}{v}
   } \qquad
   \inferrule[\textcolor{red}{FLRes-Filter}]{
-    \FValue{v}
+    \Value{v}
   }{
     \FTrans{\Filter{a}{g}{d}}{v}
   }
