@@ -316,11 +316,11 @@
   } \\
   \text{\mck{Why are there `all's in the below instead of `a'?}}\\
   \inferrule[FI-Ap-Y]{
-    \FInstruct{(p, a, \FGAll, l)}{d_1}{d_1'} \\
-    \FInstruct{(p, a, \FGAll, l)}{d_2}{d_2'} \\
+    \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
     \FPatMatchesExp{p}{d_1(d_2)}
   }{
-    \FInstruct{(p, a, g, l)}{d_1(d_2)}{\Residue{a}{\FGAll}{l}{d_1'(d_2')}}
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{\Residue{a}{g}{l}{d_1'(d_2')}}
   } \\
   \inferrule[FI-Ap-N]{
     \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
@@ -331,11 +331,11 @@
   } \\
   \text{\mck{Why are there `all's in the below instead of `a'?}}\\
   \inferrule[FI-Add-Y]{
-    \FInstruct{(p, a, \FGAll, l)}{d_1}{d_1'} \\
-    \FInstruct{(p, a, \FGAll, l)}{d_2}{d_2'} \\
+    \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
     \FPatMatchesExp{p}{d_1 + d_2}
   }{
-    \FInstruct{(p, a, g, l)}{d_1(d_2)}{\Residue{a}{\FGAll}{l}{d_1' + d_2'}}
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{\Residue{a}{g}{l}{d_1' + d_2'}}
   } \\
   \inferrule[FI-Add-N]{
     \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
@@ -349,6 +349,63 @@
 \mck{I think there's some preservation of priority property to prove here, since the numbers are re-generated on every pass.}
 
 \mck{This instrumentation will regenerate the do statements on every pass - I guess it doesn't cause problems but it would be nice if it didn't?}
+
+\fbox{\(\Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}\)} Under the filter environment of \((a, l)\), the context \(\mathcal{E}\) is transitioned to \(\mathcal{E}'\) and the action \(a'\) is returned.
+\begin{mathpar}
+  \inferrule[A-Var]{
+  }{
+    \Analyze{(a, l)}{\circ}{\circ}{a}
+  } \\
+  \inferrule[A-Ap-L]{
+    \Analyze{(a, l)}{\mathcal{E}_1}{\mathcal{E}_1'}{a'}
+  }{
+    \Analyze{(a, l)}{\mathcal{E}_1(d)}{\mathcal{E}_1'(d)}{a'}
+  } \qquad
+  \inferrule[A-Ap-R]{
+    \Analyze{(a, l)}{\mathcal{E}_2}{\mathcal{E}_2'}{a'}
+  }{
+    \Analyze{(a, l)}{d_1(\mathcal{E}_2)}{d_1(\mathcal{E}_2')}{a'}
+  } \\
+  \inferrule[A-Add-L]{
+    \Analyze{(a, l)}{\mathcal{E}_1}{\mathcal{E}_1'}{a'}
+  }{
+    \Analyze{(a, l)}{\mathcal{E}_1 + d}{\mathcal{E}_1' + d}{a'}
+  } \qquad
+  \inferrule[A-Add-R]{
+    \Analyze{(a, l)}{\mathcal{E}_2}{\mathcal{E}_2'}{a'}
+  }{
+    \Analyze{(a, l)}{d_1 + \mathcal{E}_2}{d_1 + \mathcal{E}_2'}{a'}
+  } \\
+  \inferrule[A-Filter]{
+    \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
+  }{
+    \Analyze{(a, l)}{\Filter{p}{a}{g}{\mathcal{E}}}{\Filter{p}{a}{g}{\mathcal{E}'}}{a'}
+  } \\
+  \inferrule[A-Residue-One-Old]{
+    l \le l_0 \\
+    \Analyze{(a_0, l_0)}{\mathcal{E}}{\mathcal{E}'}{a'}
+  }{
+    \Analyze{(a_0, l_0)}{\Residue{a}{\FGOne}{l}{\mathcal{E}}}{\Residue{a}{\FGOne}{l}{\mathcal{E}'}}{a'}
+  } \\
+  \inferrule[A-Residue-One-New]{
+    l > l_0 \\
+    \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
+  }{
+    \Analyze{(a_0, l_0)}{\Residue{a}{\FGOne}{l}{\mathcal{E}}}{\Residue{a}{\FGOne}{l}{\mathcal{E}'}}{a'}
+  } \\
+  \inferrule[A-Residue-All-Old]{
+    l \le l_0 \\
+    \Analyze{(a_0, l_0)}{\mathcal{E}}{\mathcal{E}'}{a'}
+  }{
+    \Analyze{(a_0, l_0)}{\Residue{a}{\FGAll}{l}{\mathcal{E}}}{\Residue{a}{\FGAll}{l}{\mathcal{E}'}}{a'}
+  } \\
+  \inferrule[A-Residue-All-New]{
+    l > l_0 \\
+    \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
+  }{
+    \Analyze{(a_0, l_0)}{\Residue{a}{\FGAll}{l}{\mathcal{E}}}{\Residue{a}{\FGAll}{l}{\mathcal{E}'}}{a'}
+  }
+\end{mathpar}
 
 \fbox{\(\FTrans{d}{d'}\)} \(d\) takes an transition to \(d'\).
 \begin{mathpar}
@@ -379,8 +436,6 @@
     \FTrans{\Filter{a}{g}{d}}{v}
   }
 \end{mathpar}
-
-
 
 \mck{ok yeah it would be nice to have a progress property here but I guess we do need types for that...}
 
