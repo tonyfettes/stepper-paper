@@ -108,6 +108,7 @@
 %%
 %% end of the preamble, start of the body of the document source.
 
+\usepackage{booktabs}
 \usepackage{mathtools}
 \usepackage{amsmath}
 \usepackage{ebproof}
@@ -115,42 +116,6 @@
 \usepackage{mathpartir}
 
 \input{macros}
-
-\newcommand{\evalsto}{\mathrel{\mathop{\Downarrow}}}
-\newcommand{\matches}{\mathrel{\mathop{\blacktriangleright}}}
-\newcommand{\fmatches}{\mathrel{\mathop{\triangleright}}}
-\newcommand{\smatches}{\mathrel{\mathop{\sim}}}
-\newcommand{\hooksto}{\mathrel{\mathop{\hookrightarrow}}}
-\newcommand{\entails}{\mathrel{\mathop{\vdash}}}
-\newcommand{\steps}{\mathrel{\mathop{\vartriangleright}}}
-\newcommand{\skips}{\mathrel{\mathop{\blacktriangleright}}}
-\newcommand{\final}{~\mathbf{final}}
-\newcommand{\ival}{~\mathbf{value}}
-\newcommand{\indet}{~\mathbf{indet}}
-\newcommand{\istep}{~\mathbf{step}}
-\newcommand{\iskip}{~\mathbf{skip}}
-\newcommand{\class}[1]{\operatorname{#1}}
-% \DeclareMathOperator{\Filter}{Filter}
-\DeclareMathOperator{\askip}{\mathsf{skip}}
-\DeclareMathOperator{\astep}{\mathsf{step}}
-\DeclareMathOperator{\filter}{\mathsf{filter}}
-\newcommand{\fin}{\mathrel{\mathop{\mathsf{in}}}}
-\newcommand{\flet}{\operatorname{\mathsf{let}}}
-\newcommand{\synth}{\mathrel{\mathop{\Rightarrow}}}
-\newcommand{\analyze}{\mathrel{\mathop{\Leftarrow}}}
-\newcommand{\ctype}[1]{\mathsf{#1}}
-\newcommand{\inl}{\operatorname{\mathsf{injL}}}
-\newcommand{\inr}{\operatorname{\mathsf{injR}}}
-\newcommand{\prl}{\operatorname{\mathsf{prjL}}}
-\newcommand{\prr}{\operatorname{\mathsf{prjR}}}
-\newcommand{\MatchArrow}{\mathrel{\mathop{\blacktriangleright_{\rightarrow}}}}
-\newcommand{\fif}{\operatorname{\mathsf{if}}}
-\newcommand{\fthen}{\mathrel{\mathop{\mathsf{then}}}}
-\newcommand{\felse}{\mathrel{\mathop{\mathsf{else}}}}
-\newcommand{\fcase}{\operatorname{\mathsf{case}}}
-\newcommand{\fcaseL}{\mathsf{L}}
-\newcommand{\fcaseR}{\mathsf{R}}
-\DeclareMathOperator{\instr}{\mathsf{instr}}
 
 \begin{document}
 

@@ -160,11 +160,11 @@
     \FInstruct{(p_0, a_0, g_0, l_0)}{\Residue{a}{g}{l}{d_0}}{\Residue{a}{g}{l}{d'}}
   } \\
   \inferrule[FI-Ap-Y]{
-    \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
-    \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
+    \FInstruct{(p, a, \FGAll, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, \FGAll, l)}{d_2}{d_2'} \\
     \FPatMatchesExp{p}{d_1(d_2)}
   }{
-    \FInstruct{(p, a, g, l)}{d_1(d_2)}{d_1'(d_2')}
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{\Residue{a}{\FGAll}{l}{d_1'(d_2')}}
   } \\
   \inferrule[FI-Ap-N]{
     \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
@@ -172,6 +172,20 @@
     \FPatNotMatchesExp{p}{d_1(d_2)}
   }{
     \FInstruct{(p, a, g, l)}{d_1(d_2)}{d_1'(d_2')}
+  } \\
+  \inferrule[FI-Add-Y]{
+    \FInstruct{(p, a, \FGAll, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, \FGAll, l)}{d_2}{d_2'} \\
+    \FPatMatchesExp{p}{d_1 + d_2}
+  }{
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{\Residue{a}{\FGAll}{l}{d_1' + d_2'}}
+  } \\
+  \inferrule[FI-Add-N]{
+    \FInstruct{(p, a, g, l)}{d_1}{d_1'} \\
+    \FInstruct{(p, a, g, l)}{d_2}{d_2'} \\
+    \FPatNotMatchesExp{p}{d_1 + d_2}
+  }{
+    \FInstruct{(p, a, g, l)}{d_1(d_2)}{d_1' + d_2'}
   }
 \end{mathpar}
 

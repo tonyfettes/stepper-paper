@@ -1,62 +1,102 @@
 \subsection{Semantics of Matching}
 
-Terms that has the same structural form after substiting all bounded variables are considered \emph{matched}.
+To serve as a good tool for understanding the behavior of a program, the stepper
+filter should have consistent behavior with the semantics of the language. Hazel
+internally uses a environment-based big-step evaluator to evaluate the program,
+but it has a consistent behavior with the substitution-based one. Therefore,
+the stepper filter shall not exhibit different behavior when building upon a
+environment-based evaluator or a substitution-based evaluator.
+
+Terms that has the same structural form after substituting all bounded variables
+are considered \emph{matched}.
 
 \begin{verbatim}
+let x = 3 in
+eval x + 3 in
+x + 3
+\end{verbatim}
+shall has the same behavior as the program
+\begin{verbatim}
+let x = 3 in
+eval 3 + 3 in
+3 + 3
+\end{verbatim}
+
+\begin{verbatim}
+eval $e in
 let g = fun x -> x + x in
-pause g in
+pause g($v) in # or pause (fun x -> x + x)($v) in
 (fun x -> x + x)(3)
-== (fun x -> x + x)(3)
+== (fun x -> x + x)(3) # or g(3) #
 \end{verbatim}
 
-\begin{verbatim}
-let g = fun x -> x + x in
-pause fun x -> x + x in
-g(3)
-== g(3) / (fun x -> x + x)(3) # Either would be OK. #
-\end{verbatim}
+\begin{figure}[h]
+  \includegraphics[width=0.4\textwidth]{images/match-mod-subst.png}
+\end{figure}
 
-The matching process is recursive.
-
+As in a substitution-based evaluator, the substitution is applied to the
+the body of a function:
 \begin{verbatim}
+eval $e in
 let y = fun x -> x in
-let g = fun x -> y in
-let h = fun x -> (fun x -> x) in
-pause g in
+let h = fun x -> (fun y -> y) in
+pause (fun x -> y)($v) in
 h(3)
-== h(3)
+== h(3) # or (fun x -> (fun x -> x))(3) #
 \end{verbatim}
+
+\begin{figure}[h]
+  \includegraphics[width=0.4\textwidth]{images/match-recursive.png}
+\end{figure}
+
+A immediate corollary of this is that the stepper filter shows that
+the filter cannot be applied to a variable, since the substitution is always
+performed ahead of the matching process, and for the filter it shall not be
+able to match against a variable.
+
+\begin{verbatim}
+eval $e in
+let x = 3 in
+pause x in
+x + x
+== 6
+\end{verbatim}
+
+\TODO{Discuss: whether or not to use alpha-equivalence here.}
 
 \subsection{Four filters: Hide, Eval, Pause and Debug}
 
+\TODO{Discuss: mention skip all, skip one, pause all and all one?}
+
 Typical use case for the four basic filters.
 
-We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
+\paragraph{eval} We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
 \begin{verbatim}
 eval 1 + 2 in
 1 + 2
+== 3
 \end{verbatim}
 
 We want the \verb|hide| filters to hide away one step.
 \begin{verbatim}
-hide let _ = _ in _ in
+hide let   =   in   in
 let x = 3 in
 let y = 4 in
 x + y
 == 3 + 4
-== y
+== 7
 \end{verbatim}
 while using \verb|eval| it will behave like this:
 \begin{verbatim}
-eval let _ = _ in _ in
+eval let   =   in   in
 let x = 3 in
 let y = 4 in
 x + y
 == 7
 \end{verbatim}
 
-The \verb|hide| filter will be \emph{used up} when its body expression
-is actually being evaluated.
+\paragraph{hide} The \verb|hide| filter will be \emph{used up} when its body
+expression is actually being evaluated.
 
 During evaluation, we want to be able to examine every instruction
 transitioning steps.
@@ -117,11 +157,13 @@ x + y
 
 \subsection{Interaction between filter statements}
 
+\TODO{Q: Do we need formalise these properties?}
+
 We want nested filter statements to behave correctly, i.e.
 \begin{enumerate}
 \item For every pattern \verb|p|, \verb|pause p| cancels the effects
   of \verb|eval p| and \verb|hide p|, vice versa.
-\item Inner filter statements takes percendence.
+\item Inner filter statements take precedences.
 \end{enumerate}
 
 \begin{verbatim}
@@ -136,16 +178,16 @@ pause $e in
 eval 1 + 2 + 3 + 4 in
 pause 1 + 2 + 3 + 4 in
 1 + 2 + 3 + 4
-== [1 + 2] + 3 + 4
+== 1 + 2 + 3 + 4
 \end{verbatim}
 
 \begin{verbatim}
 pause $e in
-hide let _ = _ in _ in
-pause let _ = _ in _ in
+hide (let   =   in  ) in
+pause (let   =   in  ) in
 let x = 3 in
 x + 4
-== [let x = 3 in x + 4]
+== let x = 3 in x + 4
 \end{verbatim}
 
 The nesting properties should works across bindings.
@@ -167,22 +209,6 @@ add(3, 4)
 == [3 + 4]
 \end{verbatim}
 
-The filters should matches against the dynamic \emph{value} of the expression
-
-\begin{verbatim}
-let add = fun x, y -> pause 3 + 4 in x + y in
-eval $e in
-add(3, 4)
-== [3 + 4]
-\end{verbatim}
-while
-\begin{verbatim}
-let add = fun x, y -> pause 3 + 4 in x + y in
-eval $e in
-add(3, 5)
-== 8
-\end{verbatim}
-
 We want the filter to recover to \emph{older} state when it finish
 evaluating matched sub-expression.
 
@@ -199,13 +225,17 @@ After evaluating \verb|3 + 3|, the stepper falls back to eval mode
 since eval filter matches \verb|1 + 2 + 3 + 4|, so it directly
 evaluates to \verb|10|.
 
-We also want a \verb|eval| filter to automatically evaluate all sub-expression until it cannot procced.
+We also want a \verb|eval| filter to automatically evaluate all sub-expression
+until it cannot proceed.
 
 \subsection{Handling inconsistency between DHExp and UExp}
 
-There are inconsistencies between the surface expression and expression for evaluation in Hazel. For example,
-fix-points are inserted in the expression during elaboration. We want the filters to work with fix-points, with-out
-user acknowledging that they actually needs a fix-point to implemenet the recursion.
+\TODO{Discuss: Move to implementation.tex?}
+
+There are inconsistencies between the surface expression and expression for
+evaluation in Hazel. For example, fix-points are inserted in the expression
+during elaboration. We want the filters to work with fix-points, with-out user
+acknowledging that they actually needs a fix-point to implement the recursion.
 
 \begin{verbatim}
 let map : ([Int], Int -> Int) -> [Int] = fun xs, f ->
@@ -225,6 +255,8 @@ In the example above, we don't want to use to click twice to do unroll and apply
 in one step.
 
 \subsection{Good but unrealistic for now}
+
+\TODO{Discuss: Is it better remove in total?}
 
 There are also something that we think would be intuitive and useful but not possible with current implementation
 
@@ -250,7 +282,7 @@ Intuitively we shall see a evaluation trace like this:
 == ...
 \end{verbatim}
 
-This is no possible since this require us to trasverse all possible
+This is no possible since this require us to traverse all possible
 evaluation sequence given a program, which would be super powerful,
 but at the same time super slow.
 
