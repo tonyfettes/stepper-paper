@@ -16,18 +16,20 @@ properties like progression and preservation.
     \begin{array}{rcl}
       \DefAct a    &\Coloneqq& \ActSkip \mid \ActStep \\
       \DefGas g    &\Coloneqq& \GasOne \mid \GasAll \\
+      \DefFilter f &\Coloneqq& (p, a, g) \\
       \DefExp e    &\Coloneqq& x \mid e(e) \mid \Lam{x}{e} \mid e + e \mid \Nat{n} \\
                    &\mid     & \Filter{f}{e} \\
                    &\mid     & \Residue{a}{g}{l}{e} \\
       \DefPat p    &\Coloneqq& x \mid p(p) \mid \Lam{x}{p} \mid p + p \mid \Nat{n} \\
-                   &\mid     & \$e \\
-                   &\mid     & \$v \\
-      \DefFilter f &\Coloneqq& (p, a, g) \\
+                   &\mid     & \$\mathtt{e} \\
+                   &\mid     & \$\mathtt{v} \\
     \end{array}
   \end{equation*}
-  \caption{Syntax of Filtered Stepper Calculus}
+  \caption{Syntax of Filtered Stepper Calculus. Here, $n$ ranges over numbers, $x$ over variables, and $l$ over priorities, which are natural numbers.}
   \label{fig:filter-syntax}
 \end{figure}
+
+\TODO{define macro for wildcard patterns}
 
 % \TODO{overview of syntax}
 
@@ -113,6 +115,52 @@ steps are hidden and is not visible to users.
 
 \TODO{motivate the two rules}
 
+Consider the example from 
+
+\begin{lstlisting}
+eval 1 + 2 + 3 + 4 in 
+pause 3 + 3 + 4 in 
+1 + 2 + 3 + 4
+\end{lstlisting}
+
+This turns into the following in the calculus:
+\begin{lstlisting}
+filter (1 + 2 + 3 + 4, skip, all) in
+filter (3 + 3 + 4, step, one) in 
+1 + 2 + 3 + 4
+\end{lstlisting}
+
+\begin{enumerate}
+    \item Instrumentation: insert residues, initially assuming the default of stepping every expression one step.
+        \begin{lstlisting}
+          filter (1 + 2 + 3 + 4, skip, all) in
+          filter (3 + 3 + 4, step, one) in 
+          (step, 0)<(skip, 1)<((1 + 2) + 3) + 4>^all>^one
+        \end{lstlisting}
+    \item Decomposition: Decompose into an evaluation context and selected expression.
+       eval context: 
+       \begin{lstlisting}
+          filter (1 + 2 + 3 + 4, skip, all) in
+          filter (3 + 3 + 4, step, one) in 
+          (step, 0)<(skip, 1)<((o) + 3) + 4>^all>^one
+        \end{lstlisting}
+        selected expression is \lstinline{1 + 2}
+    \item Action Selection: Select an action from the evaluation context, and remove new one-step residues. \TODO{make removal of one-step residues a separate operation}
+        selected action: skip
+        removing the one-step residues leaves us with:
+        \begin{lstlisting}
+          filter (1 + 2 + 3 + 4, skip, all) in
+          filter (3 + 3 + 4, step, one) in 
+          (skip, 1)<((o) + 3) + 4>^all
+        \end{lstlisting}
+    \item Instruction Transition: In each case, we take a single instruction transition.
+    \item Recomposition: Recompose into a new expression, $e_1$.
+    \item If the selected action was step, then we finish with $e_1$ (rule S-Step)
+    \item If the selected action was skip, then we recursively continue stepping.
+\end{enumerate}
+
+
+
 \fbox{\(\RuleStep{e}{e'}\)} Expression \(e\) steps to expression \(e'\).
 \begin{mathpar}
   \inferrule[S-Step]{
@@ -122,7 +170,7 @@ steps are hidden and is not visible to users.
     \FTrans{e_0}{e_t} \\
     \Compose{e_1}{\mathcal{E}_1}{e_t}
   }{
-    \RuleStep{e}{e_1'}
+    \RuleStep{e}{e_1}
   } \\
   \inferrule[S-Skip]{
     \FInstruct{(\ActStep, \GasOne, 0)}{e}{e_i} \\
@@ -148,6 +196,15 @@ steps are hidden and is not visible to users.
 \end{mathpar}
 
 % \TODO{hard code defaults instead of making them part of the judgement}
+
+\TODO{add wildcard to the instrumentation call}
+
+\TODO{add an example demonstrating why we need priorities}
+\begin{lstlisting}
+    step 1 + 2 in
+skip 1 + 2 + 3 in
+1 + 2 + 3
+\end{lstlisting}
 
 \mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
 
@@ -248,7 +305,7 @@ steps are hidden and is not visible to users.
   \inferrule[A-Filter]{
     \Analyze{(a, l)}{\mathcal{E}}{\mathcal{E}'}{a'}
   }{
-    \Analyze{(a, l)}{\Filter{(p, a, g)}{\mathcal{E}}}{\Filter{(p, a, g)}{\mathcal{E}'}}{a'}
+    \Analyze{(a, l)}{\Filter{f}{\mathcal{E}}}{\Filter{f}{\mathcal{E}'}}{a'}
   } \\
   \inferrule[A-Residue-One-Old]{
     l \le l_0 \\
@@ -395,6 +452,7 @@ steps are hidden and is not visible to users.
 % \mck{It might be clearer if we write out a separate recompose judgement too. I think decompose and recompose behave differently especially with regard to do statements}
 
 \fbox{\(\Decompose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
+\fbox{\(\Decompose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
   \inferrule[D-Var-E]{
   }{
@@ -403,7 +461,7 @@ steps are hidden and is not visible to users.
   \inferrule[D-Residue-T]{
     \Decompose{e}{\mathcal{E}}{e'}
   }{
-    \Decompose{\Residue{a}{g}{l}{e}}{\mathcal{E}}{\Residue{a}{g}{l}{e'}}
+    \Decompose{\Residue{a}{g}{l}{e}}{\Residue{a}{g}{l}{{\mathcal{E}}}}{e'}
   } \\
   \inferrule[D-Residue-E]{
     \Value{v}
@@ -413,7 +471,7 @@ steps are hidden and is not visible to users.
   \inferrule[D-Filter-T]{
     \Decompose{e}{\mathcal{E}}{e'}
   }{
-    \Decompose{\Filter{f}{e}}{\mathcal{E}}{\Filter{f}{e'}}
+    \Decompose{\Filter{f}{e}}{\Filter{f}{\mathcal{E}}}{e'}
   } \\
   \inferrule[D-Filter-E]{
     \Value{v}
@@ -610,6 +668,16 @@ steps are hidden and is not visible to users.
     \FTrans{\Filter{f}{v}}{v}
   }
 \end{mathpar}
+
+\TODO{remove T-Lam-L, T-Lam-R, T-Add-L, T-Add-R}
+
+\TODO{parenthesize the lambda in T-Lam-E}
+
+\TODO{remove T-Residue-T rule}
+
+\TODO{change $e$ to $v$ in T-Residue-E rule}
+
+\TODO{remove T-Filter-T rule}
 
 \mck{Is FLRes-T redundant since we're using evaluation contexts?}
 

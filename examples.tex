@@ -1,5 +1,25 @@
 In this section, we introduce the Hazel stepper filter.
 
+map example: 
+
+  - pattern matching
+  - hide the let at the top
+  - eval, and pause
+
+map + debug f
+  - debug
+  - substitution strikethrough
+  - nondeterminism
+
+
+we want:
+ ordering
+
+
+
+
+\mck{I think this content should be moved to the introduction}
+
 We recognized some key capabilities that traditional debuggers have and will be
 also helpful to a debugger for functional programming languages.
 \begin{enumerate}
@@ -17,21 +37,63 @@ useful tool for teaching and learning functional programming.
 \begin{enumerate}
   \item It can skip the stepping process of some \emph{kind} of expression.
   \item It controls the evaluation of the program in a granularity of
-  expression, instead of a granularity of line or instruction.ß
+  expression, instead of a granularity of line or instruction.
 \end{enumerate}
 
-To serve as a good tool for understanding the behavior of a program, the stepper
-filter should have consistent behavior with the semantics of the language. Hazel
+To serve as a good tool for understanding the behaviour of a program, the stepper
+filter should have consistent behaviour with the semantics of the language. Hazel
 internally uses a environment-based big-step evaluator to evaluate the program,
-but it has a consistent behavior with the substitution-based one. Therefore,
-the stepper filter shall not exhibit different behavior when building upon a
+but it has a consistent behaviour with the substitution-based one. Therefore,
+the stepper filter shall not exhibit different behaviour when building upon a
 environment-based evaluator or a substitution-based evaluator.
 
 The evaluation order of Hazel is not specified. Therefore, an expression that is
 not value might have multiple possible choice 
 
-\subsection{Matching}
+\mck{end introduction content}
 
+
+% \subsection{Real life example used in Hazel (490) classroom}
+
+As a motivating example, we will show how our features for stepping through programs can help clarify the execution of a map function.
+
+The map function is implemented in Hazel as follows:
+
+\begin{verbatim}
+let map : ([Int], Int -> Int) -> [Int] = fun xs, f ->
+  case xs
+  | [] => []
+  | hd :: tl => f(hd)::map(tl, f)
+  end
+in
+let square = fun x -> x * x in
+map([1, 2, 3], square)
+\end{verbatim}
+
+This code, when run, will evaluate to the list [1,4,9]. We can also run it in the hazel single stepper to get a full execution trace:
+
+\TODO{Insert execution trace image}
+
+The full execution trace shows each of the small-step transitions that have been taken when evaluating this program. Where a substitution has occurred, it is indicated by the variable name with a strike-through, followed by the new value. The code highlighted green at the bottom indicates where the next small-step transition can be taken.
+
+Seeing the full length of the execution trace can be distracting however, so the Hazel stepper provides some filter primitives that can specify steps to hide. In order to more clearly show the intuition behind the map function, we can hide all steps except for those which show the application of the map function, by inserting the following filters:
+
+\begin{verbatim}
+hide $e in
+let map = ... in
+let square = fun x -> x * x in
+pause map($v, $v) in
+\end{verbatim}
+
+\TODO{Insert execution trace image}
+
+The \verb|hide $e| construct hides all execution steps. (The \verb|$e| wildcard pattern matches any expression.) The \verb|pause map($v, $v)| construct, since it comes later than the \verb|hide| expression, overrides the \verb|hide| expression to show any steps from an expression that contains a map applied to two values. (The \verb|$v| wildcard pattern matches any value expression.)
+
+\TODO{Insert debug example once it has been debugged}
+
+
+
+\subsection{Matching}
 
 Terms that has the same structural form after substituting all bounded variables
 are considered \emph{matched}.
@@ -88,22 +150,28 @@ x + x
 == 6
 \end{verbatim}
 
-\TODO{Discuss: whether or not to use alpha-equivalence here.}
+% \TODO{Discuss: whether or not to use alpha-equivalence here.}
 
 \subsection{Four filters: Hide, Eval, Pause and Debug}
 
-\TODO{Discuss: mention skip all, skip one, pause all and all one?}
+% \TODO{Discuss: mention skip all, skip one, pause all and all one?}
 
 Typical use case for the four basic filters.
 
-\paragraph{eval} We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
+\subsubsection{Eval}
+
+We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
 \begin{verbatim}
 eval 1 + 2 in
 1 + 2
 == 3
 \end{verbatim}
 
-We want the \verb|hide| filters to hide away one step.
+\subsubsection{Hide}
+
+The \verb|hide| filter will be \emph{used up} when its body
+expression is actually being evaluated.
+
 \begin{verbatim}
 hide let   =   in   in
 let x = 3 in
@@ -112,7 +180,7 @@ x + y
 == 3 + 4
 == 7
 \end{verbatim}
-while using \verb|eval| it will behave like this:
+Compare with \verb|eval|
 \begin{verbatim}
 eval let   =   in   in
 let x = 3 in
@@ -121,8 +189,7 @@ x + y
 == 7
 \end{verbatim}
 
-\paragraph{hide} The \verb|hide| filter will be \emph{used up} when its body
-expression is actually being evaluated.
+\subsubsection{Pause}
 
 During evaluation, we want to be able to examine every instruction
 transitioning steps.
@@ -139,6 +206,8 @@ This would be especially useful when unfolding a higher level
 expression to its individual terms, for example I want to know how
 many terms of \verb|fib(1)| I need to call to evaluate the whole
 \verb|fib(5)|.
+
+\subsubsection{Debug}
 
 On the other hand, we want to went through all the evaluation process of a
 sub-expression, for example when debugging the implementation of a function
@@ -170,20 +239,9 @@ eval 3 + 7 + (5 + 6) in
 \end{verbatim}
 The first one will immediately evaluate to final value is because it is a \verb|pause| statement, which will be only effective once.
 
-Filters can't be applied on values. A more significant corollary of this is they cannot be applied on variables as well.
-\begin{verbatim}
-eval $e in
-pause x in
-pause y in
-let x = 3 in
-let y = 4 in
-x + y
-== 7
-\end{verbatim}
-
 \subsection{Interaction between filter statements}
 
-\TODO{Q: Do we need formalise these properties?}
+% \TODO{Q: Do we need formalise these properties?}
 
 We want nested filter statements to behave correctly, i.e.
 \begin{enumerate}
@@ -191,6 +249,8 @@ We want nested filter statements to behave correctly, i.e.
   of \verb|eval p| and \verb|hide p|, vice versa.
 \item Inner filter statements take precedences.
 \end{enumerate}
+
+\subsubsection{``Newer'' Expression overrides ``Older'' Expressions}
 
 \begin{verbatim}
 pause 1 + 2 + 3 + 4 in
@@ -216,7 +276,7 @@ x + 4
 == let x = 3 in x + 4
 \end{verbatim}
 
-The nesting properties should works across bindings.
+\subsubsection{The nesting properties should works across bindings}
 
 \begin{verbatim}
 eval $e in
@@ -235,8 +295,9 @@ add(3, 4)
 == [3 + 4]
 \end{verbatim}
 
-We want the filter to recover to \emph{older} state when it finish
-evaluating matched sub-expression.
+
+\subsubsection{We want the filter to recover to \emph{older} state when it finish
+evaluating matched sub-expression.}
 
 \begin{verbatim}
 pause $e in
@@ -254,63 +315,65 @@ evaluates to \verb|10|.
 We also want a \verb|eval| filter to automatically evaluate all sub-expression
 until it cannot proceed.
 
-\subsection{Handling inconsistency between DHExp and UExp}
 
-\TODO{Discuss: Move to implementation.tex?}
 
-There are inconsistencies between the surface expression and expression for
-evaluation in Hazel. For example, fix-points are inserted in the expression
-during elaboration. We want the filters to work with fix-points, with-out user
-acknowledging that they actually needs a fix-point to implement the recursion.
+% \subsection{Handling inconsistency between DHExp and UExp}
 
-\begin{verbatim}
-let map : ([Int], Int -> Int) -> [Int] = fun xs, f ->
-  case xs
-  | [] => []
-  | hd :: tl => f(hd)::map(tl, f)
-  end
-in
-let square = fun x -> x * x in
-pause map($v) in
-map([1, 2, 3], square)
-== 1::map([2, 3], f)
-== 1::4::map([3], f)
-\end{verbatim}
+% \TODO{Discuss: Move to implementation.tex?}
 
-In the example above, we don't want to use to click twice to do unroll and apply, instead we want to merge these two transition
-in one step.
+% There are inconsistencies between the surface expression and expression for
+% evaluation in Hazel. For example, fix-points are inserted in the expression
+% during elaboration. We want the filters to work with fix-points, with-out user
+% acknowledging that they actually needs a fix-point to implement the recursion.
 
-\subsection{Good but unrealistic for now}
+% \begin{verbatim}
+% let map : ([Int], Int -> Int) -> [Int] = fun xs, f ->
+%   case xs
+%   | [] => []
+%   | hd :: tl => f(hd)::map(tl, f)
+%   end
+% in
+% let square = fun x -> x * x in
+% pause map($v) in
+% map([1, 2, 3], square)
+% == 1::map([2, 3], f)
+% == 1::4::map([3], f)
+% \end{verbatim}
 
-\TODO{Discuss: Is it better remove in total?}
+% In the example above, we don't want to use to click twice to do unroll and apply, instead we want to merge these two transition
+% in one step.
 
-There are also something that we think would be intuitive and useful but not possible with current implementation
+% \subsection{Good but unrealistic for now}
 
-\begin{verbatim}
-let fib : Int -> Int =
-  fun n ->
-    if n <= 1 then
-      n
-    else
-      fib(n - 1) + fib(n - 2)
-in
-pause fib($v) + fib($v) in
-fib(5)
-== 3
-\end{verbatim}
+% \TODO{Discuss: Is it better remove in total?}
 
-Intuitively we shall see a evaluation trace like this:
-\begin{verbatim}
-...
-== fib(4) + fib(3)
-== fib(3) + fib(2) + fib(3)
-== fib(3) + fib(2) + fib(2) + fib(1)
-== ...
-\end{verbatim}
+% There are also something that we think would be intuitive and useful but not possible with current implementation
 
-This is no possible since this require us to traverse all possible
-evaluation sequence given a program, which would be super powerful,
-but at the same time super slow.
+% \begin{verbatim}
+% let fib : Int -> Int =
+%   fun n ->
+%     if n <= 1 then
+%       n
+%     else
+%       fib(n - 1) + fib(n - 2)
+% in
+% pause fib($v) + fib($v) in
+% fib(5)
+% == 3
+% \end{verbatim}
+
+% Intuitively we shall see a evaluation trace like this:
+% \begin{verbatim}
+% ...
+% == fib(4) + fib(3)
+% == fib(3) + fib(2) + fib(3)
+% == fib(3) + fib(2) + fib(2) + fib(1)
+% == ...
+% \end{verbatim}
+
+% This is no possible since this require us to traverse all possible
+% evaluation sequence given a program, which would be super powerful,
+% but at the same time super slow.
 
 %%% Local Variables:
 %%% mode: latex
