@@ -47,6 +47,8 @@
 \DeclareMathOperator{\DefAct}{Act}
 \DeclareMathOperator{\DefGas}{Gas}
 \DeclareMathOperator{\DefFilter}{Filter}
+\DeclareMathOperator{\DefTyp}{Typ}
+\DeclareMathOperator{\DefTypCtx}{TypCtx}
 \DeclareMathOperator{\KeywordFilter}{filter}
 \DeclareMathOperator{\KeywordHide}{hide}
 \DeclareMathOperator{\KeywordEval}{eval}
@@ -123,6 +125,12 @@
 \newcommand{\FHasType}[3]{#1 \vdash #2 : #3}
 \newcommand{\FInTypeContext}[3]{#1 : #2 \in #3}
 \newcommand{\FTNat}{\mathbb{N}}
+
+\newcommand{\Arrow}[2]{#1 \Rightarrow #2}
+\newcommand{\Natural}{\mathbb{N}}
+\newcommand{\TypeEntails}[3]{#1 \vdash #2 : #3}
+\newcommand{\TypeContains}[3]{#1 \ni #2 : #3}
+\newcommand{\TypeExtends}[3]{#1 , #2 : #3}
 
 %%% Local Variables:
 %%% mode: latex

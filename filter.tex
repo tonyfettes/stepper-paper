@@ -6,11 +6,8 @@ the dynamics of the language. Finally, we will discuss the optional part of the
 semantic, the statics of the language, and show that the calculus satisfies
 properties like progression and preservation.
 
-% \TODO{introduction to this section}
-
 \subsection{Syntax}
 
-% \TODO{put syntax into a figure}
 \begin{figure}[h]
   \begin{equation*}
     \begin{array}{rcl}
@@ -28,10 +25,6 @@ properties like progression and preservation.
   \caption{Syntax of Filtered Stepper Calculus. Here, $n$ ranges over numbers, $x$ over variables, and $l$ over priorities, which are natural numbers.}
   \label{fig:filter-syntax}
 \end{figure}
-
-% \TODO{define macro for wildcard patterns}
-
-% \TODO{overview of syntax}
 
 The syntax of filter stepper calculus (Fig.~\ref{fig:filter-syntax}) is a
 extended version of untyped lambda calculus. Additionally, natural numbers and
@@ -60,20 +53,26 @@ indicating the priority of the residue.
 
 \subsection{Contextual Dynamics}
 
+The contextual dynamics of the filtered stepper calculus builds around the stepping judgment. This judgment establish the contextual behavior of the stepper.
+
 There are two main operations in our semantics, one is to \emph{skip} the
 evaluation of an expression, the other is to \emph{pause} at a certain point of
-evaluation. These two operations leads to two main stepping judgement in our
+evaluation. These two operations leads to two main stepping judgment in our
 dynamic specifications. The \textsc{S-Step} rule specifies when do we want to
 stop at a step, while the \textsc{S-Skip} rule specifies when we want to skip over
 current step and proceed to next ones.
 
-There is an extra rule in the stepping judgement. The elimination step of filter
+There is an extra rule in the stepping judgment. The elimination step of filter
 should be always skipped. As pattern-matching against the filter statement is
 not possible within current pattern definition as in
 Figure.~\ref{fig:filter-syntax}, we treat them specially to make sure these
 steps are hidden and is not visible to users.
 
-\TODO{motivate the two rules}
+We will first see two examples going through how should we or user interpreter these two rules, the gives the formal definitions of the judgment and all preceding judgment, including judgment for instrumentation, decomposition/re-composition, instruction-transition, and most importantly, stepping.
+
+% \TODO{motivate the two rules}
+
+\subsubsection{Examples and Motivations}
 
 Consider the example from
 \begin{lstlisting}[language=hazel]
@@ -90,39 +89,25 @@ filter (3 + 3 + 4, step, one) in
 \end{lstlisting}
 
 \begin{enumerate}
-  \item Instrumentation: At this step, we transverse the expression recursively
-    and collect filters we have seen. Then for each sub-expression, we test
-    if the sub-expression matches any of the filters we have seen. If it does,
-    we insert a residue expression with the filter information around the matched
-    sub-expression.
+  \item Instrumentation: At this step, we transverse the expression recursively and collect filters we have seen. Then for each sub-expression, we test if the sub-expression matches any of the filters we have seen. If it does, we insert a residue expression with the filter information around the matched sub-expression.
 
-    If we start with an empty set, we might end up with a
-    empty matching result and the stepper will have no clue what kind of action
-    to take. Therefore, we set the default behavior to be stepping through the evaluation of every expression.
+  If we start with an empty set, we might end up with a empty matching result and the stepper will have no clue what kind of action to take. Therefore, we set the default behavior to be stepping through the evaluation of every expression.
 
-    Here, we apply two filters to the expression \(1 + 2 + 3 + 4\), one is
-    \(\Filter{1 + 2 + 3 + 4}{\ActSkip, \GasAll}\), the other is \(\Filter{3 + 3
-    + 4}{\ActStep, \GasOne}\). During the application of the first filter, we
-    find out that the sub-expression \(1 + 2 + 3 + 4\) matches the pattern \(1 +
-    2 + 3 + 4\), so we insert a residue expression \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\)
-    around the sub-expression, getting instrumented expression as:
-    \begin{lstlisting}[language=hazel]
-      filter ($e, pause, one) in
-      filter (1 + 2 + 3 + 4, skip, all) in
-      filter (3 + 3 + 4, step, one) in
-      (pause, 0)<
-        (skip, 1)<
-          (pause, 0)<(pause, 0)<1 + 2>^one + 3>^one + 4
-        >^all
-      >^one
-    \end{lstlisting}
+  Here, we apply two filters to the expression \(1 + 2 + 3 + 4\), one is \(\Filter{1 + 2 + 3 + 4}{\ActSkip, \GasAll}\), the other is \(\Filter{3 + 3 + 4}{\ActStep, \GasOne}\). During the application of the first filter, we find out that the sub-expression \(1 + 2 + 3 + 4\) matches the pattern \(1 + 2 + 3 + 4\), so we insert a residue expression \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) around the sub-expression (I-Add-Y). We then get an instrumented expression as:
+  \begin{lstlisting}[language=hazel]
+    filter ($e, pause, one) in
+    filter (1 + 2 + 3 + 4, skip, all) in
+    filter (3 + 3 + 4, step, one) in
+    (pause, 0)<
+      (skip, 1)<
+        (pause, 0)<(pause, 0)<1 + 2>^one + 3>^one + 4
+      >^all
+    >^one
+  \end{lstlisting}
 
-    However, during the application of the second filter, there is no sub-expression
-    that matches the pattern \(3 + 3 + 4\), so no residue expression is inserted
-    around the sub-expression. The instrumented expression remains the same.
-  \item Decomposition: The expression is decomposed into an evaluation context
-    and selected expression. The instrumented expression from last
-    step can be decomposed into an evaluation context like this:
+  However, during the application of the second filter, there is no sub-expression that matches the pattern \(3 + 3 + 4\), so no residue expression is inserted around the sub-expression (I-Add-N). The instrumented expression remains the same.
+
+  \item Decomposition: The expression is decomposed into an evaluation context and selected expression. The instrumented expression from last step can be decomposed by recursively decomposing addition (D-Add-L) and residue expression (D-Residue). The decomposed evaluation context looks like this:
     \begin{lstlisting}[language=hazel]
       filter (1 + 2 + 3 + 4, skip, all) in
       filter (3 + 3 + 4, step, one) in
@@ -133,49 +118,88 @@ filter (3 + 3 + 4, step, one) in
       >^one
     \end{lstlisting}
     and a selected expression \lstinline{1 + 2}
-  \item Action Selection:
-    Select an action from the evaluation context. The action that is closer
-    to the selected expression, and with the highest priority is selected. In
-    this case, the action \(\ActSkip\) is selected, and the expression is kept
-    the same.
-  \item Residue removal: The residue expression that has life-time of one is
-    removed from the expression. The expression after the removal of the residue
-    expression is:
+
+  \item Action Selection: Select an action from the evaluation context. The action that is closer to the selected expression, and with the highest priority is selected. In this case, we transverse the expression using (A-Add-L) and update the selected action when we retreat.The action \(\ActSkip\) is selected, and the expression itself is kept the same.
+
+  \item Residue removal: The residue expression that has life-time of one is removed from the expression. This step is done using the \(\Decay\) function. The expression after the removal of the residue expression is:
     \begin{lstlisting}[language=hazel]
       filter (1 + 2 + 3 + 4, skip, all) in
       filter (3 + 3 + 4, step, one) in
       (skip, 1)<((*@\(\circ\)@*) + 3) + 4>^all
     \end{lstlisting}
-  \item Instruction Transition: The selected expression is instruction-transitioned
-    to a new expression. In this case, the selected expression is \(1 + 2\),
-    which is instruction-transitioned to \(3\).
+  \item Instruction Transition: The selected expression is instruction-transitioned to a new expression. In this case, the selected expression is \(1 + 2\), which is instruction-transitioned to \(3\) according to the transition rule (T-Add).
 
-  \item Recomposition: When the selected-expression is instruction-transitioned
-    to a new expression, we need to recompose the transitioned selected
-    expression with evaluation context to get the updated expression. The
-    recomposed expression is:
+  \item Re-composition: When the selected-expression is instruction-transitioned to a new expression, we need to recompose the transitioned selected expression with evaluation context to get the updated expression. The rules for re-composition is the same as the rules for decomposition, but instead, we start from rule (D-Add-L) to build up the recomposed expression in a bottom-up way. The recomposed expression is:
     \begin{lstlisting}[language=hazel]
       filter (1 + 2 + 3 + 4, skip, all) in
       filter (3 + 3 + 4, step, one) in
       (skip, 1)<3 + 3 + 4>^all
     \end{lstlisting}
 
-  \item If the selected expression (before instruction-transition) is a filter
-    expression, i.e. it is either of form \(\Filter{f}{e}\) or
-    \(\Residue{a}{g}{l}{e}\). Then the stepper will skip the step, by directly
-    going to the next step. This helps to hide the filter expressions from the
-    user.
+  \item If the selected expression (before instruction-transition) is a filter expression, i.e. it is either of form \(\Filter{f}{e}\) or \(\Residue{a}{g}{l}{e}\), then the stepper will not display the step to the user, and directly go to the next step (S-Filter). This helps to hide the filter expressions from the user.
 
-  \item Otherwise, if the action is \(\ActStep\), then the stepper pause at this
-    step exhibiting the evaluating context and the selected expression to user.
+  \item Otherwise, if the action is \(\ActStep\), then the stepper pause at this step exhibiting the evaluating context and the selected expression to user. (S-Step)
 
-  \item If the action is \(\ActSkip\), then the stepper will skip the selected
-    expression and continue stepping.
+  \item If the action is \(\ActSkip\), then the stepper will skip the selected expression and continue stepping. (S-Skip) In this case, the selected expression is \(1 + 2\), and the selected action is \(\ActSkip\), so the stepper will skip this step, which is calculating the value of \(1 + 2\) to be \(3\).
 
-    In this case, the selected expression is \(1 + 2\), and the
-    selected action is \(\ActSkip\), so the stepper will skip this step, which is
-    calculating the value of \(1 + 2\) to be \(3\).
+  \item The final result of the stepping is:
+    \begin{lstlisting}[language=hazel]
+      filter (1 + 2 + 3 + 4, skip, all) in
+      filter (3 + 3 + 4, step, one) in
+      (skip, 1)<3 + 3 + 4>^all
+    \end{lstlisting}
 \end{enumerate}
+
+In the example above, we have briefly explored how instrumentation, action selection,  decomposition, and transition works, and how the stepper is able to decide what to do next. However, it does not explain why we need a priorities to get the right selected action. Here is an example demonstrating why we need priorities in the residue expressions:
+\begin{lstlisting}[language=hazel]
+pause 1 + 2 in
+eval 1 + 2 + 3 in
+1 + 2 + 3
+\end{lstlisting}
+
+Most of the steps are similar to previous example, so we keep them simple here.
+\begin{enumerate}
+  \item\label{agl:priority-example-instr} Instrumentation: The instrumentation process is not affected by the priorities. After instrumentation, the expression looks like:
+  \begin{lstlisting}[language=hazel]
+    pause 1 + 2 in
+    eval 1 + 2 + 3 in
+    (eval, 1)<(pause, 0)<1 + 2>^one + 3>^all
+  \end{lstlisting}
+
+  \item Decomposition: This step is also not affected by the priorities. The expression is decomposed into an evaluation context and a selected expression. The selected expression is \(1 + 2\). The evaluation context is:
+  \begin{lstlisting}[language=hazel]
+    pause 1 + 2 in
+    eval 1 + 2 + 3 in
+    (eval, 1)<(pause, 0)<(*@\(\circ\)@*)>^one + 3>^all
+  \end{lstlisting}
+
+  \item Action selection: The action selection is where the priorities come into play. The action that is closer to the selected expression, and with the highest priority is selected. In this case, the selected action is \(\ActSkip\), and the selected expression is \(1 + 2 + 3\). If we don't have priorities, we will end up selecting \(1 + 2\) with the selected action being \(\ActStep\). This is rather counter-intuitive, as we want the effect of a later filter, like \(Filter{1 + 2 + 3}{\ActSkip, \GasAll}\), to take precedence over the effect of an earlier filter, like \(\Filter{1 + 2}{\ActStep, \GasOne}\).
+
+  \item Residue removal: The residue expression that has life-time of one is removed from the expression using function \(\Decay\). The expression after the removal of the residue expression is:
+  \begin{lstlisting}[language=hazel]
+    pause 1 + 2 in
+    eval 1 + 2 + 3 in
+    (skip, 1)<(*@\(\circ\)@*) + 3>^all
+  \end{lstlisting}
+
+  \item Instruction transition: The selected expression is instruction-transitioned to a new expression. In this case, the selected expression is \(1 + 2\), which is instruction-transitioned to \(3\).
+
+  \item Re-composition: The instruction-transitioned expression \(3\) is recomposed with the evaluation context to get the updated expression:
+  \begin{lstlisting}[language=hazel]
+    pause 1 + 2 in
+    eval 1 + 2 + 3 in
+    (skip, 1)<3 + 3>^all
+  \end{lstlisting}
+
+  \item Because we have selected the \(\ActSkip\) action, the stepper will not stop here but instead goes to the step~\ref{agl:priority-example-instr} and continue stepping.
+
+  \item All the following stepping steps ends up being skipped, so the final result of the stepping is the value of the expression:
+  \begin{lstlisting}[language=hazel]
+    6
+  \end{lstlisting}
+\end{enumerate}
+
+With the two motivating examples, the rules for the dynamic semantics of the filter calculus is presented as following.
 
 \fbox{\(\RuleStep{e}{e'}\)} Expression \(e\) steps to expression \(e'\).
 \begin{mathpar}
@@ -213,19 +237,6 @@ filter (3 + 3 + 4, step, one) in
     \RuleStep{e}{e_1'}
   }
 \end{mathpar}
-
-% \TODO{hard code defaults instead of making them part of the judgement}
-
-% \TODO{add wildcard to the instrumentation call}
-
-\TODO{add an example demonstrating why we need priorities}
-
-\subsubsection{Why we need prioritites}
-\begin{lstlisting}[language=hazel]
-pause 1 + 2 in
-eval 1 + 2 + 3 in
-1 + 2 + 3
-\end{lstlisting}
 
 \mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
 
@@ -555,83 +566,6 @@ eval 1 + 2 + 3 in
 
 \hxf{Exactly.}
 
-% \mck{Todo: remove the unused `output' g from the above - I think we can also remove the `input` g too?}
-
-% \fbox{\(\Compose{e}{\mathcal{E}}{e'}\)} Expression \(e\) can be obtained by
-% putting expression \(e'\) into the mark of \(\mathcal{E}\).
-% \begin{mathpar}
-%   \inferrule[C-Top]{
-%     \
-%   }{
-%     \Compose{e}{\circ}{e}
-%   } \qquad
-%   \inferrule[C-Ap-L]{
-%     \Compose{e_l}{\mathcal{E}}{e}
-%   }{
-%     \Compose{e_l(e_r)}{\mathcal{E}(e_r)}{e}
-%   } \qquad
-%   \inferrule[C-Ap-R]{
-%     \Compose{e_r}{\mathcal{E}}{e}
-%   }{
-%     \Compose{e_l(e_r)}{e_l(\mathcal{E})}{e}
-%   } \\
-%   \inferrule[C-Add-L]{
-%     \Compose{e_l}{\mathcal{E}}{e}
-%   }{
-%     \Compose{e_l + e_r}{\mathcal{E} + e_r}{e}
-%   } \qquad
-%   \inferrule[C-Add-R]{
-%     \Compose{e_r}{\mathcal{E}}{e}
-%   }{
-%     \Compose{e_l + e_r}{e_l + \mathcal{E}}{e}
-%   } \\
-%   \inferrule[C-Filter]{
-%     \Compose{e'}{\mathcal{E}}{e}
-%   }{
-%     \Compose{\Filter{(p, a, g)}{e'}}{\Filter{(p, a, g)}{\mathcal{E}}}{e}
-%   } \\
-%   \inferrule[C-Residue]{
-%     \Compose{e'}{\mathcal{E}}{e}
-%   }{
-%     \Compose{\Residue{a}{g}{l}{e'}}{\Residue{a}{g}{l}{\mathcal{E}}}{e}
-%   }
-% \end{mathpar}
-
-% \fbox{\(e_1 \equiv_\alpha e_2\)} \(e_1\) is alpha-equivalent to \(e_2\).
-% \begin{mathpar}
-%   \inferrule[\(\alpha\)-Var]{
-%   }{
-%     x \equiv_\alpha x
-%   } \qquad
-%   \inferrule[\(\alpha\)-Lam]{
-%     e_1 \equiv_\alpha [x_2/x_1](e_2)
-%   }{
-%     \Lam{x_1}{e_1} \equiv_\alpha \Lam{x_2}{e_2}
-%   } \\
-%   \inferrule[\(\alpha\)-Ap]{
-%     e_1 \equiv_\alpha e_3 \\
-%     e_2 \equiv_\alpha e_4
-%   }{
-%     e_1(e_2) \equiv_\alpha e_3(e_4)
-%   } \qquad
-%   \inferrule[\(\alpha\)-Add]{
-%     e_1 \equiv_\alpha e_3 \\
-%     e_2 \equiv_\alpha e_4
-%   }{
-%     e_1 + e_2 \equiv_\alpha e_3 + e_4
-%   } \\
-%   \inferrule[\(\alpha\)-Filter]{
-%     e_1 \equiv_\alpha e_2
-%   }{
-%     \Filter{(p, a, g)}{e_1} \equiv_\alpha \Filter{(p, a, g)}{e_2}
-%   } \\
-%   \inferrule[\(\alpha\)-Residue]{
-%     e_1 \equiv_\alpha e_2
-%   }{
-%     \Residue{a}{g}{l}{e_1} \equiv_\alpha \Residue{a}{g}{l}{e_2}
-%   }
-% \end{mathpar}
-
 \fbox{\(\Strip{e} = {e'}\)} Strip filter/do expression in expression \(e\) to get expression \(e'\).
 \[
   \begin{aligned}
@@ -647,72 +581,30 @@ eval 1 + 2 + 3 in
 
 \fbox{\(\FTrans{e}{e'}\)} \(e\) takes an instruction transition to \(e'\).
 \begin{mathpar}
-  \inferrule[T-Lam-L]{
-    \FTrans{e_1}{e_1'}
-  }{
-    \FTrans{\Lam{x}{e_1}(e_2)}{\Lam{x}{e_1'}{e_2}}
-  } \qquad
-  \inferrule[T-Lam-R]{
-    \Value{e_1} \\
-    \FTrans{e_2}{e_2'}
-  }{
-    \FTrans{\Lam{x}{e_1}(e_2)}{\Lam{x}{e_1}{e_2'}}
-  } \\
-  \inferrule[T-Lam-E]{
+  \inferrule[T-Lam]{
     \Value{e_1} \\
     \Value{e_2}
   }{
-    \FTrans{\Lam{x}{e_1}(e_2)}{\FSubst{e_2}{x}{e_1}}
-  } \\
-  \inferrule[T-Add-L]{
-    \FTrans{e_1}{e_1'}
-  }{
-    \FTrans{e_1 + e_2}{e_1' + e_2}
+    \FTrans{(\Lam{x}{e_1})(e_2)}{\FSubst{e_2}{x}{e_1}}
   } \qquad
-  \inferrule[T-Add-R]{
-    \Value{n_1} \\
-    \FTrans{e_2}{e_2'}
-  }{
-    \FTrans{n_1 + e_2}{n_1 + e_2'}
-  } \\
-  \inferrule[T-Add-E]{
+  \inferrule[T-Add]{
     \Value{n_1} \\
     \Value{n_2} \\
     n_1 + n_2 = n
   }{
     \FTrans{\Nat{n_1} + \Nat{n_2}}{\Nat{n}}
   } \\
-  \inferrule[T-Residue-T]{
-    \FTrans{e}{e'}
-  }{
-    \FTrans{\Residue{a}{g}{l}{e}}{\Residue{a}{g}{l}{e'}}
-  } \qquad
-  \inferrule[T-Residue-E]{
+  \inferrule[T-Residue]{
     \Value{v}
   }{
-    \FTrans{\Residue{a}{g}{l}{e}}{v}
-  } \\
-  \inferrule[T-Filter-T]{
-    \FTrans{e}{e'}
-  }{
-    \FTrans{\Filter{f}{e}}{\Filter{f}{e'}}
+    \FTrans{\Residue{a}{g}{l}{v}}{v}
   } \qquad
-  \inferrule[T-Filter-E]{
+  \inferrule[T-Filter]{
     \Value{v}
   }{
     \FTrans{\Filter{f}{v}}{v}
   }
 \end{mathpar}
-
-\TODO{remove T-Lam-L, T-Lam-R, T-Add-L, T-Add-R}
-
-\TODO{parenthesize the lambda in T-Lam-E}
-
-\TODO{remove T-Residue-T rule}
-
-\TODO{change $e$ to $v$ in T-Residue-E rule}
-
-\TODO{remove T-Filter-T rule}
 
 \mck{Is FLRes-T redundant since we're using evaluation contexts?}
 
@@ -720,7 +612,7 @@ eval 1 + 2 + 3 in
 
 \mck{ok yeah it would be nice to have a progress property here but I guess we do need types for that...}
 
-
+\subsection{Properties}
 
 \TODO{Properties}
 \\\\
@@ -732,30 +624,131 @@ $\Instruct{p}{a}{g}{l}{e}{e'} \Rightarrow \Instruct{p}{a}{g}{l}{e'}{e''} \Righta
 \\\\
 Conjecture : Determinism of steps
 
-$\RuleStep{}{}{(a, g)}{e}{e'} \Rightarrow \RuleStep{(a, g)}{e}{e''} \Rightarrow e' = e''$
+$\RuleStep{e}{e'} \Rightarrow \RuleStep{e}{e''} \Rightarrow e' = e''$
 
 \mck{I think this holds in this calculus, but not in Hazel itself.}
 \\\\
 Conjecture(Unchanging Priorities)
 
-???
+\(\)
 
 \mck{Since priorities are always re-numbered, we want some sort of conjecture that they remain the same. We could even possibly use this to avoid duplication of `do's?}
-\\\\
+
+\hxf{I believe the Unchanging Priorities does holds. I would phrase it as: the residue statements inserted by the same filter statement has the same priorities (or their priorites keeps in order), even across decays and steppings.}
+
 Conjecture(Correctness)
-
-
-
 
 \subsection{Statics}
 
+Optionally, we want to give the filtered stepper calculus so that it can have some reasonable behavior with regard to free variables. The most notable benefit we can obtained from a typing system is that we can enforce that there is no free variable in the pattern and the expression before we test if they match.
+
+We can extend the definition of filtered stepper calculus to include type.
+\begin{figure}[h]
+  \begin{equation*}
+    \begin{array}{rcl}
+      \ldots       &         & \ldots \\
+      \DefTyp \tau &\Coloneqq& \Natural \\
+                   &\mid     & \Arrow{\tau}{\tau}
+    \end{array}
+  \end{equation*}
+  \caption{Syntax of Typed Filtered Stepper Calculus. Only definitions of types are listed, refer to Figure~\ref{fig:filter-syntax} for omitted definitions.}
+  \label{fig:filter-syntax}
+\end{figure}
+
+\fbox{\(\TypeEntails{\Gamma}{e}{\tau}\)} Under typing context \(\Gamma\), expression \(e\) has type \(\tau\).
+\begin{mathpar}
+  \inferrule[TE-Var]{
+    \TypeContains{\Gamma}{x}{\tau}
+  }{
+    \TypeEntails{\Gamma}{x}{\tau}
+  } \qquad
+  \inferrule[TE-Lam]{
+    \TypeEntails{\TypeExtends{\Gamma}{x}{\tau_x}}{e}{\tau_e}
+  }{
+    \TypeEntails{\Gamma}{\Lam{x}{e}}{\Arrow{\tau_x}{\tau_e}}
+  } \qquad
+  \inferrule[TE-Ap]{
+    \TypeEntails{\Gamma}{e_1}{\Arrow{\tau_x}{\tau_e}} \\
+    \TypeEntails{\Gamma}{e_2}{\tau_x}
+  }{
+    \TypeEntails{\Gamma}{e_1(e_2)}{\tau_e}
+  } \\
+  \inferrule[TE-Nat]{
+    \
+  }{
+    \TypeEntails{\Gamma}{\Nat{n}}{\Natural}
+  } \qquad
+  \inferrule[TE-Add]{
+    \TypeEntails{\Gamma}{e_1}{\Natural} \\
+    \TypeEntails{\Gamma}{e_2}{\Natural}
+  }{
+    \TypeEntails{\Gamma}{e_1 + e_2}{\Natural}
+  } \\
+  \inferrule[TE-Filter]{
+    \TypeEntails{\Gamma}{p}{\tau_p} \\
+    \TypeEntails{\Gamma}{e}{\tau_e}
+  }{
+    \TypeEntails{\Gamma}{\Filter{p}{e}}{\tau_e}
+  } \qquad
+  \inferrule[TE-Residue]{
+    \TypeEntails{\Gamma}{e}{\tau}
+  }{
+    \TypeEntails{\Gamma}{\Residue{a}{g}{l}{e}}{\tau}
+  }
+\end{mathpar}
+
+\fbox{\(\TypeEntails{\Gamma}{p}{\tau}\)} Under typing context \(\Gamma\), expression \(p\) has type \(\tau\).
+\begin{mathpar}
+  \inferrule[TP-WE]{
+  }{
+    \TypeEntails{\Gamma}{\PatExpr}{\tau}
+  } \qquad
+  \inferrule[TP-WV]{
+  }{
+    \TypeEntails{\Gamma}{\PatValue}{\tau}
+  } \\
+  \inferrule[TP-Var]{
+    \TypeContains{\Gamma}{x}{\tau}
+  }{
+    \TypeEntails{\Gamma}{x}{\tau}
+  } \qquad
+  \inferrule[TP-Lam]{
+    \TypeEntails{\TypeExtends{\Gamma}{x}{\tau_x}}{e}{\tau_e}
+  }{
+    \TypeEntails{\Gamma}{\Lam{x}{e}}{\Arrow{\tau_x}{\tau_e}}
+  } \qquad
+  \inferrule[TP-Ap]{
+    \TypeEntails{\Gamma}{p_1}{\Arrow{\tau_x}{\tau_p}} \\
+    \TypeEntails{\Gamma}{p_2}{\tau_x}
+  }{
+    \TypeEntails{\Gamma}{p_1(p_2)}{\tau_e}
+  } \\
+  \inferrule[TP-Nat]{
+    \
+  }{
+    \TypeEntails{\Gamma}{\Nat{n}}{\Natural}
+  } \qquad
+  \inferrule[TP-Add]{
+    \TypeEntails{\Gamma}{e_1}{\Natural} \\
+    \TypeEntails{\Gamma}{e_2}{\Natural}
+  }{
+    \TypeEntails{\Gamma}{e_1 + e_2}{\Natural}
+  }
+\end{mathpar}
+
+Theorem(Preservation): If a expression has type \(\tau\), then aftere stepping, the stepped expression also has type \(\tau\).
+\[
+  \forall e, \tau,
+  \TypeEntails{\varnothing}{e}{\tau} \land \RuleStep{e}{e'} \implies \TypeEntails{\varnothing}{e'}{\tau}
+\]
+
+Theorem(Progress): If a expression is well typed, then it can be stepped.
+\[
+  \forall e, \tau,
+  \TypeEntails{\varnothing}{e}{\tau} \implies \RuleStep{e}{e'} \lor \Value{e}
+\]
+
 \TODO{Get filter a simple type system like STLC}
-
-\TODO{Gas is not useful in return}
-
-\TODO{Better notation for do's statements}
-
-
 
 %%% Local Variables:
 %%% mode: latex
