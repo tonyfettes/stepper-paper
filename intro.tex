@@ -27,7 +27,7 @@ substitution-based equational semantics -- we want the steps to show up as
 justified proof steps, to mirror what we have previously done in lectures and
 written assignments.
 
-(example here of a simple equational stepping proof)
+\TODO{(example here of a simple equational stepping proof)}
 
 One of the main challenges in using such a debugger in lecturing is that it is
 often tedious to step through a program. Students has to witness many boring
@@ -36,19 +36,18 @@ well understand. Those instructions will litter the proof and obscure the key
 idea. Our approach is to develop a scoped filter system that allows us to write patterns
 that will be skipped or paused. For example,
 
-(more sophisticated example where you show side-by-side the unfiltered and
-filtered version of the same stepping sequence) fib, foldright, map
+\TODO{(more sophisticated example where you show side-by-side the unfiltered and
+filtered version of the same stepping sequence) fib, foldright, map}
 
 Our scoped filter system allows the user to specify sub-expressions whose full
 evaluation they are not interested in, sub-expressions whose full evaluation
 they are interested in, specific steps they are not interested in, and specific
 steps they are interested in.
 
-want to be able to step programs with holes, including error holes:
-abstract foldright vs foldleft
+\TODO{want to be able to step programs with holes, including error holes:
+abstract foldright vs foldleft}
 
-Prior work summary: what have people tried to do to handle this challenge in the past? why is that not quite enough
-
+% Prior work summary: what have people tried to do to handle this challenge in the past? why is that not quite enough
 
 We have made the following contributes in the paper:
 \begin{itemize}
@@ -65,4 +64,37 @@ We have made the following contributes in the paper:
     filter system have desired properties.
 \end{itemize}
 
-- developed the hazel stepper and filter system, implemented it, deployed it in lecture (qualitative evaluation), deployed it to students (qualitative + quantitative evaluation), formalized the filter semantics, metatheory
+% - developed the hazel stepper and filter system, implemented it, deployed it in lecture (qualitative evaluation), deployed it to students (qualitative + quantitative evaluation), formalized the filter semantics, metatheory
+
+
+\mck{content moved out of example}
+
+We recognized some key capabilities that traditional debuggers have and will be
+also helpful to a debugger for functional programming languages.
+\begin{enumerate}
+  \item Evaluation can be paused at some point and resumed later. The user
+    should be able specify where/when the evaluation should be paused. This is
+    usually implemented as the breakpoint mechanism in a traditional debugger.
+  \item Paused evaluation can be stepped through. traditionally, debuggers will
+    provide user with three buttons to ``step through'', ``step over'' and
+    ``step out''.
+\end{enumerate}
+
+Moreover, we want some extra capabilities that are specific to functional
+programming languages and a classroom settings, especially Hazel, to be a
+useful tool for teaching and learning functional programming.
+\begin{enumerate}
+  \item It can skip the stepping process of some \emph{kind} of expression.
+  \item It controls the evaluation of the program in a granularity of
+  expression, instead of a granularity of line or instruction.
+\end{enumerate}
+
+To serve as a good tool for understanding the behaviour of a program, the stepper
+filter should have consistent behaviour with the semantics of the language. Hazel
+internally uses a environment-based big-step evaluator to evaluate the program,
+but it has a consistent behaviour with the substitution-based one. Therefore,
+the stepper filter shall not exhibit different behaviour when building upon a
+environment-based evaluator or a substitution-based evaluator.
+
+The evaluation order of Hazel is not specified. Therefore, an expression that is
+not value might have multiple possible choice 

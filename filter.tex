@@ -74,14 +74,15 @@ We will first see two examples going through how should we or user interpreter t
 
 \subsubsection{Examples and Motivations}
 
-Consider the example from
+Consider the example below:
+\lstset{xleftmargin=1in}
 \begin{lstlisting}[language=hazel]
 eval 1 + 2 + 3 + 4 in
 pause 3 + 3 + 4 in
 1 + 2 + 3 + 4
 \end{lstlisting}
 
-This turns into the following in the calculus:
+It turns into the following in the calculus:
 \begin{lstlisting}[language=hazel]
 filter (1 + 2 + 3 + 4, skip, all) in
 filter (3 + 3 + 4, step, one) in
@@ -201,46 +202,164 @@ Most of the steps are similar to previous example, so we keep them simple here.
 
 With the two motivating examples, the rules for the dynamic semantics of the filter calculus is presented as following.
 
-\fbox{\(\RuleStep{e}{e'}\)} Expression \(e\) steps to expression \(e'\).
+% \TODO{Put decay after instruction-transition.}
+
+% \fbox{\(\RuleStep{e}{e'}\)} Expression \(e\) steps to expression \(e'\).
+% \begin{mathpar}
+%   \inferrule[S-Step]{
+%     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
+%     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
+%     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \\
+%     \FTrans{e_0}{e_t} \\
+%     \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
+%     \Compose{e_1}{\mathcal{E}_1}{e_t}
+%   }{
+%     \RuleStep{e}{e_1}
+%   }
+% \end{mathpar}
+
+% \mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
+
+% \subsubsection{Solution 1: use separate judgments for skipping, stepping, and value (done)}
+
+% eval = skip all
+% hide = skip one
+% debug = step all
+% pause = step one
+
+% e = 
+% skip all 1 + 2 + 3 in 
+% step one 3 + 3 in 
+% 1 + 2 + 3 + 4 * 5 * 6
+
+% ei = 
+% skip all 1 + 2 + 3 in 
+% step one 3 + 3 in 
+% <1 + 2 + 3> + 4 * 5 * 6
+
+% e0 = 1 + 2
+
+% et = 3
+
+% e1 = 
+% skip all 1 + 2 + 3 in 
+% step one 3 + 3 in 
+% <3 + 3> + 4 * 5 * 6
+
+% |->
+
+% e1' = 
+% skip all 1 + 2 + 3 in 
+% step one 3 + 3 in 
+% <6> + 4 * 5 * 6
+
+
+% 0. zero click judgement
+% 1. 1 click judgement
+%   a. produce contexts + whether they are skipped
+%   b. select one context and take a user step
+%   c. run the zero click judgement
+
+% 1. step judgement
+% 2. skip judgement
+% 3. value judgement
+
+% \fbox{\(\RuleSkip{e}{e'}\)}
+% \begin{mathpar}
+%   \inferrule[S-Skip]{
+%     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
+%     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
+%     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \\
+%     \FTrans{e_0}{e_t} \\
+%     \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
+%     \Compose{e_1}{\mathcal{E}_1}{e_t}
+%   }{
+%     \RuleSkip{e}{e_1'}
+%   } \\
+%   \inferrule[S-Filter]{
+%     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
+%     \Decompose{e_i}{\mathcal{E}_0}{\Filter{f}{e_0}} \\
+%     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{a} \\
+%     \FTrans{e_0}{e_t} \\
+%     \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
+%     \Compose{e_1}{\mathcal{E}_1}{e_t} \\
+%     \RuleSkip{e_1}{e_1'}
+%   }{
+%     \RuleSkip{e}{e_1'}
+%   }
+% \end{mathpar}
+
+% \fbox{\(\RulePaused{e}{e'}\)} Evaluation of expression \(e\) is skipped-then-paused at \(e'\).
+% \begin{mathpar}
+%   \inferrule[S-Paused-Init]{
+%     \RuleStep{e}{e'}
+%   }{
+%     \RulePaused{e}{e'}
+%   } \qquad
+%   \inferrule[S-Paused-Recur]{
+%     \RuleSkip{e}{e''} \\
+%     \RulePaused{e''}{e'}
+%   }{
+%     \RulePaused{e}{e''}
+%   }
+% \end{mathpar}
+
+% \fbox{\(\RuleValue{e}{v}\)} Expression \(e\) is skipped to a value \(v\).
+% \begin{mathpar}
+%   \inferrule[S-Value-Init]{
+%     \Value{v}
+%   }{
+%     \RuleValue{v}
+%   } \qquad
+%   \inferrule[S-Value-Recur]{
+%     \RuleSkip{e}{e'}\\
+%     \RuleValue{e'}{v}
+%   }{
+%     \RuleValue{e}{v}
+%   }
+% \end{mathpar}
+
+% \begin{theorem}
+% For an expression \(e\) that has type \(\tau\) under typing conting context \(\Gamma\), (or equivalently has no free variable in a untyped system), after skipping some stext \(\Gamma\), (or equivalently has no free variable in a untyped system), after skipping some steps, either it is an value, or it can be transitioned into another expression.
+% \end{theorem}
+
+% \subsubsection{Solution 2: count the number of steps}
+
+\fbox{\(\RuleStepN{e}{e'}{n}\)} Expression \(e\) steps to \(e'\) in \(n\) steps.
 \begin{mathpar}
-  \inferrule[S-Step]{
+  \inferrule[SN-Step]{
     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \\
-    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
     \FTrans{e_0}{e_t} \\
+    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
     \Compose{e_1}{\mathcal{E}_1}{e_t}
   }{
-    \RuleStep{e}{e_1}
+    \RuleStepN{e}{e_1}{1}
   } \\
-  \inferrule[S-Skip]{
+  \inferrule[SN-Skip]{
     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \\
-    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
+    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \lor e_0 = \Filter{f}{e_0'}\\
     \FTrans{e_0}{e_t} \\
-    \Compose{e_1}{\mathcal{E}_1}{e_t} \\
-    \RuleStep{e_1}{e_1'}
+    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
+    \Compose{e_1}{\mathcal{E}_1}{e_t} \\    
+    \RuleStepN{e_1}{e_2}{n}
   }{
-    \RuleStep{e}{e_1'}
+    \RuleStepN{e}{e_2}{n}
   } \\
-  \text{\hxf{I add a new rule here, so that filters can be properly eliminated.}}\\
-  \inferrule[S-Filter]{
-    \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
-    \Decompose{e_i}{\mathcal{E}_0}{\Filter{f}{e_0}} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{a} \\
-    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
-    \FTrans{e_0}{e_t} \\
-    \Compose{e_1}{\mathcal{E}_1}{e_t} \\
-    \RuleStep{e_1}{e_1'}
+  \inferrule[SN-Value]{
+    \Value{v}
   }{
-    \RuleStep{e}{e_1'}
+    \RuleStepN{v}{v}{0}
   }
 \end{mathpar}
 
-\mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
+\begin{theorem}
+For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), (or equivalently has no free variable in a un-typed system), it can either take an \emph{1 step transition} (SN-Step, SN-Skip) into another expression, or a ``\(0\) steps transition'' into a value (SN-Skip, SN-Value).
+\end{theorem}
 
-\hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. Instead, we are reading the result of decomposition.}
+% \hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. Instead, we are reading the result of decomposition.}
 
 \fbox{\(\Instruct{p}{a}{g}{l}{e}{e'}\)} \(e\) is dynamically instructed to \(e'\).
 \begin{mathpar}
@@ -300,13 +419,13 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   }
 \end{mathpar}
 
-\mck{I think there's some preservation of priority property to prove here, since the numbers are re-generated on every pass.}
+% \mck{I think there's some preservation of priority property to prove here, since the numbers are re-generated on every pass.}
 
-\hxf{I would formalize the preservation property like this: the priority of residue/do statements \emph{produced} by the same filter have the same priorities}
+% \hxf{I would formalize the preservation property like this: the priority of residue/do statements \emph{produced} by the same filter have the same priorities}
 
-\mck{This instrumentation will regenerate the do statements on every pass - I guess it doesn't cause problems but it would be nice if it didn't?}
+% \mck{This instrumentation will regenerate the do statements on every pass - I guess it doesn't cause problems but it would be nice if it didn't?}
 
-\hxf{Yeah it would be much nicer to avoid the duplication of do statements. We can to some ad-hoc fusing of do-statements same effect \& priorties, probably utilmately we want the instrumentation to be Idempotent.}
+% \hxf{Yeah it would be much nicer to avoid the duplication of do statements. We can to some ad-hoc fusing of do-statements same effect \& priorties, probably utilmately we want the instrumentation to be Idempotent.}
 
 \fbox{\(\Decay{\mathcal{E}} = \mathcal{E}'\)} Evaluation Context \(\mathcal{E}\) decays to context \(\mathcal{E}'\).
 \[
@@ -321,6 +440,8 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \Decay{\Residue{a}{\GasAll}{l}{e}} &= \Residue{a}{\GasAll}{l}{\Decay{e}}
   \end{aligned}
 \]
+
+% \TODO{Correct the function to use correct evaluation context}
 
 \fbox{\(\Analyze{(a, l)}{\mathcal{E}}{a'}\)} Under the filter environment of \((a, l)\), the context \(\mathcal{E}\) is transitioned to \(\mathcal{E}'\) and the action \(a'\) is returned.
 \begin{mathpar}
@@ -434,7 +555,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   \end{aligned}
 \]
 
-\hxf{Shall we use different notation for patterns?}
+% \hxf{Shall we use different notation for patterns?}
 
 % \TODO{swap order to [v/x]e}
 
