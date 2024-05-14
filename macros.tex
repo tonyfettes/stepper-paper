@@ -59,8 +59,8 @@
 %% Terms
 
 % Pat
-\newcommand{\PatExpr}{\mathtt{\$e}}
-\newcommand{\PatValue}{\mathtt{\$v}}
+\newcommand{\PatExpr}{\mathsf{\$e}}
+\newcommand{\PatValue}{\mathsf{\$v}}
 
 % Act
 \newcommand{\ActSkip}{\mathsf{skip}}
@@ -119,8 +119,11 @@
 
 \newcommand{\FTrans}[2]{#1 \rightarrow #2}
 
-\newcommand{\RuleSkip}[2]{#1 \rightarrow^{\ast} #2}
+\newcommand{\RuleSkip}[2]{#1 \twoheadrightarrow #2}
 \newcommand{\RuleStep}[2]{#1 \mapsto #2}
+\newcommand{\RulePaused}[2]{#1 \twoheadrightarrow^{\ast}_{p} #2}
+\newcommand{\RuleValue}[2]{#1 \twoheadrightarrow^{\ast}_{v} #2}
+\newcommand{\RuleStepN}[3]{#1 \mapsto^{#3} #2}
 
 \newcommand{\FHasType}[3]{#1 \vdash #2 : #3}
 \newcommand{\FInTypeContext}[3]{#1 : #2 \in #3}

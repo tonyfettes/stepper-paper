@@ -1,319 +1,303 @@
-In this section, we introduce the Hazel stepper filter.
-
-map example: 
-
-  - pattern matching
-  - hide the let at the top
-  - eval, and pause
-
-map + debug f
-  - debug
-  - substitution strikethrough
-  - nondeterminism
-
-
-we want:
- ordering
-
-
-
-
-\mck{I think this content should be moved to the introduction}
-
-We recognized some key capabilities that traditional debuggers have and will be
-also helpful to a debugger for functional programming languages.
-\begin{enumerate}
-  \item Evaluation can be paused at some point and resumed later. The user
-    should be able specify where/when the evaluation should be paused. This is
-    usually implemented as the breakpoint mechanism in a traditional debugger.
-  \item Paused evaluation can be stepped through. traditionally, debuggers will
-    provide user with three buttons to ``step through'', ``step over'' and
-    ``step out''.
-\end{enumerate}
-
-Moreover, we want some extra capabilities that are specific to functional
-programming languages and a classroom settings, especially Hazel, to be a
-useful tool for teaching and learning functional programming.
-\begin{enumerate}
-  \item It can skip the stepping process of some \emph{kind} of expression.
-  \item It controls the evaluation of the program in a granularity of
-  expression, instead of a granularity of line or instruction.
-\end{enumerate}
-
-To serve as a good tool for understanding the behaviour of a program, the stepper
-filter should have consistent behaviour with the semantics of the language. Hazel
-internally uses a environment-based big-step evaluator to evaluate the program,
-but it has a consistent behaviour with the substitution-based one. Therefore,
-the stepper filter shall not exhibit different behaviour when building upon a
-environment-based evaluator or a substitution-based evaluator.
-
-The evaluation order of Hazel is not specified. Therefore, an expression that is
-not value might have multiple possible choice 
-
-\mck{end introduction content}
-
-
-% \subsection{Real life example used in Hazel (490) classroom}
-
 As a motivating example, we will show how our features for stepping through programs can help clarify the execution of a map function.
 
-The map function is implemented in Hazel as follows:
+A Hazel implementation of a map function over lists of integers is given in \autoref{fig:hazel-map}. The full execution trace is shown in \autoref{fig:full-trace}. It shows each of the small-step transitions that have been taken when evaluating this program. 
 
-\begin{verbatim}
-let map : ([Int], Int -> Int) -> [Int] = fun xs, f ->
-  case xs
-  | [] => []
-  | hd :: tl => f(hd)::map(tl, f)
-  end
-in
-let square = fun x -> x * x in
-map([1, 2, 3], square)
-\end{verbatim}
-
-This code, when run, will evaluate to the list [1,4,9]. We can also run it in the hazel single stepper to get a full execution trace:
-
-\TODO{Insert execution trace image}
-
-The full execution trace shows each of the small-step transitions that have been taken when evaluating this program. Where a substitution has occurred, it is indicated by the variable name with a strike-through, followed by the new value. The code highlighted green at the bottom indicates where the next small-step transition can be taken.
-
-Seeing the full length of the execution trace can be distracting however, so the Hazel stepper provides some filter primitives that can specify steps to hide. In order to more clearly show the intuition behind the map function, we can hide all steps except for those which show the application of the map function, by inserting the following filters:
-
-\begin{verbatim}
-hide $e in
-let map = ... in
-let square = fun x -> x * x in
-pause map($v, $v) in
-\end{verbatim}
-
-\TODO{Insert execution trace image}
-
-The \verb|hide $e| construct hides all execution steps. (The \verb|$e| wildcard pattern matches any expression.) The \verb|pause map($v, $v)| construct, since it comes later than the \verb|hide| expression, overrides the \verb|hide| expression to show any steps from an expression that contains a map applied to two values. (The \verb|$v| wildcard pattern matches any value expression.)
-
-\TODO{Insert debug example once it has been debugged}
-
-
-
-\subsection{Matching}
-
-Terms that has the same structural form after substituting all bounded variables
-are considered \emph{matched}.
-
-\begin{verbatim}
-let x = 3 in
-eval x + 3 in
-x + 3
-\end{verbatim}
-shall has the same behavior as the program
-\begin{verbatim}
-let x = 3 in
-eval 3 + 3 in
-3 + 3
-\end{verbatim}
-
-\begin{verbatim}
-eval $e in
-let g = fun x -> x + x in
-pause g($v) in # or pause (fun x -> x + x)($v) in
-(fun x -> x + x)(3)
-== (fun x -> x + x)(3) # or g(3) #
-\end{verbatim}
-
-\begin{figure}[h]
-  \includegraphics[width=0.4\textwidth]{images/match-mod-subst.png}
+\begin{figure}
+    \centering
+    \begin{minipage}{.40\linewidth}
+    \begin{subfigure}{\linewidth}
+        \includegraphics[scale=0.57]{images/eg11.png}
+        \caption{Hazel Code. This code, when run, will evaluate to the list [1,4,9].}
+        \label{fig:hazel-map}
+    \end{subfigure}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{.57\linewidth}
+    \begin{subfigure}{\linewidth}
+        \includegraphics[scale=0.57]{images/eg12.png}
+        \caption{Stepper output in stepper mode. Strikethroughs indicate that a substitution has taken place.The code highlighted green at the bottom indicates where the next small-step transition can be taken.}
+        \label{fig:full-trace}
+    \end{subfigure}
+    \end{minipage}
+    \caption{The stepper used on a list map example.}
 \end{figure}
 
-As in a substitution-based evaluator, the substitution is applied to the
-the body of a function:
-\begin{verbatim}
-eval $e in
-let y = fun x -> x in
-let h = fun x -> (fun y -> y) in
-pause (fun x -> y)($v) in
-h(3)
-== h(3) # or (fun x -> (fun x -> x))(3) #
-\end{verbatim}
+In some circumstances, seeing the full length of the execution trace can be distracting. We may, for example, only want to focus on the recursive calls. The Hazel stepper provides some filter primitives that can specify steps to hide. In order to more clearly show the intuition behind the map function, we can hide all steps except for those which show the application of the map function, by inserting a hide filter and a pause filter as shown in \autoref{fig:hide-pause-map}.
 
-\begin{figure}[h]
-  \includegraphics[width=0.4\textwidth]{images/match-recursive.png}
+\begin{figure}
+    \centering
+    \begin{minipage}{.40\linewidth}
+    \begin{subfigure}{\linewidth}
+        \includegraphics[scale=0.57]{images/eg21.png}
+        \caption{The code from \autoref{fig:hazel-map} modified with extra hide and pause statements.}
+        \label{fig:hide-pause-map}
+    \end{subfigure}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{.57\linewidth}
+    \begin{subfigure}{\linewidth}
+        \includegraphics[scale=0.57]{images/eg22.png}
+        \caption{Stepper output showing only the recursive calls.}
+        \label{fig:full-trace}
+    \end{subfigure}
+    \end{minipage}
+    \caption{A filtered stepper for showing recursive calls in the list map example.}
 \end{figure}
 
-A immediate corollary of this is that the stepper filter shows that
-the filter cannot be applied to a variable, since the substitution is always
-performed ahead of the matching process, and for the filter it shall not be
-able to match against a variable.
+Each filter has a pattern that triggers the filter. The \verb|$e| pattern matches any expression, and the \verb|$v| pattern matches any fully-evaluated expression. \verb|map($v, $v)| is a pattern that matches any map expression applied to two fully-evaluated expressions. More details on the patterns are given in \TODO{ref}
 
-\begin{verbatim}
-eval $e in
-let x = 3 in
-pause x in
-x + x
-== 6
-\end{verbatim}
+The \verb|hide| construct hides a step that matches the pattern, thus \verb|hide $e| hides all steps. The \verb|pause| construct shows a step that matches the pattern. Since it comes later, the \verb|pause map($v, $v)| overrides the \verb|hide| expression to show any steps taken from an expression that contains a \verb|map| applied to two values. More details are given on the ordering of filters in \TODO{ref}
 
-% \TODO{Discuss: whether or not to use alpha-equivalence here.}
+The \verb|hide| and \verb|pause| constructs each only hide or show one step. We also provide two more constructs, \verb|eval| and \verb|debug| that hide or show all evaluation steps for a subexpression that matches the given filter. 
 
-\subsection{Four filters: Hide, Eval, Pause and Debug}
-
-% \TODO{Discuss: mention skip all, skip one, pause all and all one?}
-
-Typical use case for the four basic filters.
-
-\subsubsection{Eval}
-
-We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
-\begin{verbatim}
-eval 1 + 2 in
-1 + 2
-== 3
-\end{verbatim}
-
-\subsubsection{Hide}
-
-The \verb|hide| filter will be \emph{used up} when its body
-expression is actually being evaluated.
-
-\begin{verbatim}
-hide let   =   in   in
-let x = 3 in
-let y = 4 in
-x + y
-== 3 + 4
-== 7
-\end{verbatim}
-Compare with \verb|eval|
-\begin{verbatim}
-eval let   =   in   in
-let x = 3 in
-let y = 4 in
-x + y
-== 7
-\end{verbatim}
-
-\subsubsection{Pause}
-
-During evaluation, we want to be able to examine every instruction
-transitioning steps.
-
-\begin{verbatim}
-eval 1 + 2 + 3 + 4 in
-pause 3 + 3 in
-1 + 2 + 3 + 4
-== 3 + 3 + 4
-== 10
-\end{verbatim}
-
-This would be especially useful when unfolding a higher level
-expression to its individual terms, for example I want to know how
-many terms of \verb|fib(1)| I need to call to evaluate the whole
-\verb|fib(5)|.
-
-\subsubsection{Debug}
-
-On the other hand, we want to went through all the evaluation process of a
-sub-expression, for example when debugging the implementation of a function
-\begin{verbatim}
-let (is_even: Int -> Bool, is_odd: Int -> Bool) = ... in
-debug is_odd($v) in
-is_even(5)
-\end{verbatim}
-
-The difference between \verb|pause| and \verb|debug| is subtle. For
-example, considering the following two piece of code:
-\begin{verbatim}
-eval $e in
-pause (1 + 2) + (3 + 4) + (5 + 6) in
-eval 3 + 7 + (5 + 6) in
-(1 + 2) + (3 + 4) + (5 + 6)
-== (1 + 2) + (3 + 4) + (5 + 6)
-== 21
-\end{verbatim}
-and
-\begin{verbatim}
-eval $e in
-debug (1 + 2) + (3 + 4) + (5 + 6) in
-eval 3 + 7 + (5 + 6) in
-(1 + 2) + (3 + 4) + (5 + 6)
-== (1 + 2) + (3 + 4) + (5 + 6)
-== 3 + (3 + 4) + (5 + 6)
-== 21
-\end{verbatim}
-The first one will immediately evaluate to final value is because it is a \verb|pause| statement, which will be only effective once.
-
-\subsection{Interaction between filter statements}
-
-% \TODO{Q: Do we need formalise these properties?}
-
-We want nested filter statements to behave correctly, i.e.
-\begin{enumerate}
-\item For every pattern \verb|p|, \verb|pause p| cancels the effects
-  of \verb|eval p| and \verb|hide p|, vice versa.
-\item Inner filter statements take precedences.
-\end{enumerate}
-
-\subsubsection{``Newer'' Expression overrides ``Older'' Expressions}
-
-\begin{verbatim}
-pause 1 + 2 + 3 + 4 in
-eval 1 + 2 + 3 + 4 in
-1 + 2 + 3 + 4
-== 10
-\end{verbatim}
-
-\begin{verbatim}
-pause $e in
-eval 1 + 2 + 3 + 4 in
-pause 1 + 2 + 3 + 4 in
-1 + 2 + 3 + 4
-== 1 + 2 + 3 + 4
-\end{verbatim}
-
-\begin{verbatim}
-pause $e in
-hide (let   =   in  ) in
-pause (let   =   in  ) in
-let x = 3 in
-x + 4
-== let x = 3 in x + 4
-\end{verbatim}
-
-\subsubsection{The nesting properties should works across bindings}
-
-\begin{verbatim}
-eval $e in
-let x = 1 in
-pause 3 + 3 in
-let y = 2 in
-eval 3 + 3 in
-x + y + 3 + 4
-== 10
-\end{verbatim}
-
-\begin{verbatim}
-let add = fun x, y -> pause $e in x + y in
-eval $e in
-add(3, 4)
-== [3 + 4]
-\end{verbatim}
+For example, in figure \autoref{fig:debug-map} we have added a debug filter that shows the full trace of each application of \verb|f|. We can see in \autoref{fig:debug-trace} that this leads to not only showing steps that apply \verb|f|, but also the multiplication that takes place to evaluate \verb|f(x)|.
 
 
-\subsubsection{We want the filter to recover to \emph{older} state when it finish
-evaluating matched sub-expression.}
+\begin{figure}
+    \centering
+    \begin{minipage}{.40\linewidth}
+    \begin{subfigure}{\linewidth}
+        \includegraphics[scale=0.57]{images/eg31.png}
+        \caption{The code from \autoref{fig:hazel-map} modified with extra hide, pause, and debug statements.}
+        \label{fig:debug-map}
+    \end{subfigure}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{.57\linewidth}
+    \begin{subfigure}{\linewidth}
+        \includegraphics[scale=0.57]{images/eg32.png}
+        \caption{Stepper output showing only the recursive calls and the steps taken to evaluate squares.}
+        \label{fig:debug-trace}
+    \end{subfigure}
+    \end{minipage}
+    \caption{A filtered stepper that demonstrates debug mode.}
+\end{figure}
 
-\begin{verbatim}
-pause $e in
-eval 1 + 2 + 3 + 4 in
-pause 3 + 3 in
-1 + 2 + 3 + 4
-== 3 + 3 + 4
-== 10
-\end{verbatim}
+Note that this \verb|debug| statement overrides the \verb|pause| and \verb|eval| statement because of the dynamic scoping of filters, given in \TODO{ref}
 
-After evaluating \verb|3 + 3|, the stepper falls back to eval mode
-since eval filter matches \verb|1 + 2 + 3 + 4|, so it directly
-evaluates to \verb|10|.
 
-We also want a \verb|eval| filter to automatically evaluate all sub-expression
-until it cannot proceed.
+
+% \subsection{Matching}
+
+% Terms that has the same structural form after substituting all bounded variables
+% are considered \emph{matched}.
+
+% \begin{verbatim}
+% let x = 3 in
+% eval x + 3 in
+% x + 3
+% \end{verbatim}
+% shall has the same behavior as the program
+% \begin{verbatim}
+% let x = 3 in
+% eval 3 + 3 in
+% 3 + 3
+% \end{verbatim}
+
+% \begin{verbatim}
+% eval $e in
+% let g = fun x -> x + x in
+% pause g($v) in # or pause (fun x -> x + x)($v) in
+% (fun x -> x + x)(3)
+% == (fun x -> x + x)(3) # or g(3) #
+% \end{verbatim}
+
+% \begin{figure}[h]
+%   \includegraphics[width=0.4\textwidth]{images/match-mod-subst.png}
+% \end{figure}
+
+% As in a substitution-based evaluator, the substitution is applied to the
+% the body of a function:
+% \begin{verbatim}
+% eval $e in
+% let y = fun x -> x in
+% let h = fun x -> (fun y -> y) in
+% pause (fun x -> y)($v) in
+% h(3)
+% == h(3) # or (fun x -> (fun x -> x))(3) #
+% \end{verbatim}
+
+% \begin{figure}[h]
+%   \includegraphics[width=0.4\textwidth]{images/match-recursive.png}
+% \end{figure}
+
+% A immediate corollary of this is that the stepper filter shows that
+% the filter cannot be applied to a variable, since the substitution is always
+% performed ahead of the matching process, and for the filter it shall not be
+% able to match against a variable.
+
+% \begin{verbatim}
+% eval $e in
+% let x = 3 in
+% pause x in
+% x + x
+% == 6
+% \end{verbatim}
+
+% % \TODO{Discuss: whether or not to use alpha-equivalence here.}
+
+% \subsection{Four filters: Hide, Eval, Pause and Debug}
+
+% % \TODO{Discuss: mention skip all, skip one, pause all and all one?}
+
+% Typical use case for the four basic filters.
+
+% \subsubsection{Eval}
+
+% We want to use the \verb|eval| to \emph{evaluate} all sub-expressions that matches the pattern.
+% \begin{verbatim}
+% eval 1 + 2 in
+% 1 + 2
+% == 3
+% \end{verbatim}
+
+% \subsubsection{Hide}
+
+% The \verb|hide| filter will be \emph{used up} when its body
+% expression is actually being evaluated.
+
+% \begin{verbatim}
+% hide let   =   in   in
+% let x = 3 in
+% let y = 4 in
+% x + y
+% == 3 + 4
+% == 7
+% \end{verbatim}
+% Compare with \verb|eval|
+% \begin{verbatim}
+% eval let   =   in   in
+% let x = 3 in
+% let y = 4 in
+% x + y
+% == 7
+% \end{verbatim}
+
+% \subsubsection{Pause}
+
+% During evaluation, we want to be able to examine every instruction
+% transitioning steps.
+
+% \begin{verbatim}
+% eval 1 + 2 + 3 + 4 in
+% pause 3 + 3 in
+% 1 + 2 + 3 + 4
+% == 3 + 3 + 4
+% == 10
+% \end{verbatim}
+
+% This would be especially useful when unfolding a higher level
+% expression to its individual terms, for example I want to know how
+% many terms of \verb|fib(1)| I need to call to evaluate the whole
+% \verb|fib(5)|.
+
+% \subsubsection{Debug}
+
+% On the other hand, we want to went through all the evaluation process of a
+% sub-expression, for example when debugging the implementation of a function
+% \begin{verbatim}
+% let (is_even: Int -> Bool, is_odd: Int -> Bool) = ... in
+% debug is_odd($v) in
+% is_even(5)
+% \end{verbatim}
+
+% The difference between \verb|pause| and \verb|debug| is subtle. For
+% example, considering the following two piece of code:
+% \begin{verbatim}
+% eval $e in
+% pause (1 + 2) + (3 + 4) + (5 + 6) in
+% eval 3 + 7 + (5 + 6) in
+% (1 + 2) + (3 + 4) + (5 + 6)
+% == (1 + 2) + (3 + 4) + (5 + 6)
+% == 21
+% \end{verbatim}
+% and
+% \begin{verbatim}
+% eval $e in
+% debug (1 + 2) + (3 + 4) + (5 + 6) in
+% eval 3 + 7 + (5 + 6) in
+% (1 + 2) + (3 + 4) + (5 + 6)
+% == (1 + 2) + (3 + 4) + (5 + 6)
+% == 3 + (3 + 4) + (5 + 6)
+% == 21
+% \end{verbatim}
+% The first one will immediately evaluate to final value is because it is a \verb|pause| statement, which will be only effective once.
+
+% \subsection{Interaction between filter statements}
+
+% % \TODO{Q: Do we need formalise these properties?}
+
+% We want nested filter statements to behave correctly, i.e.
+% \begin{enumerate}
+% \item For every pattern \verb|p|, \verb|pause p| cancels the effects
+%   of \verb|eval p| and \verb|hide p|, vice versa.
+% \item Inner filter statements take precedences.
+% \end{enumerate}
+
+% \subsubsection{``Newer'' Expression overrides ``Older'' Expressions}
+
+% \begin{verbatim}
+% pause 1 + 2 + 3 + 4 in
+% eval 1 + 2 + 3 + 4 in
+% 1 + 2 + 3 + 4
+% == 10
+% \end{verbatim}
+
+% \begin{verbatim}
+% pause $e in
+% eval 1 + 2 + 3 + 4 in
+% pause 1 + 2 + 3 + 4 in
+% 1 + 2 + 3 + 4
+% == 1 + 2 + 3 + 4
+% \end{verbatim}
+
+% \begin{verbatim}
+% pause $e in
+% hide (let   =   in  ) in
+% pause (let   =   in  ) in
+% let x = 3 in
+% x + 4
+% == let x = 3 in x + 4
+% \end{verbatim}
+
+% \subsubsection{The nesting properties should works across bindings}
+
+% \begin{verbatim}
+% eval $e in
+% let x = 1 in
+% pause 3 + 3 in
+% let y = 2 in
+% eval 3 + 3 in
+% x + y + 3 + 4
+% == 10
+% \end{verbatim}
+
+% \begin{verbatim}
+% let add = fun x, y -> pause $e in x + y in
+% eval $e in
+% add(3, 4)
+% == [3 + 4]
+% \end{verbatim}
+
+
+% \subsubsection{We want the filter to recover to \emph{older} state when it finish
+% evaluating matched sub-expression.}
+
+% \begin{verbatim}
+% pause $e in
+% eval 1 + 2 + 3 + 4 in
+% pause 3 + 3 in
+% 1 + 2 + 3 + 4
+% == 3 + 3 + 4
+% == 10
+% \end{verbatim}
+
+% After evaluating \verb|3 + 3|, the stepper falls back to eval mode
+% since eval filter matches \verb|1 + 2 + 3 + 4|, so it directly
+% evaluates to \verb|10|.
+
+% We also want a \verb|eval| filter to automatically evaluate all sub-expression
+% until it cannot proceed.
 
 
 

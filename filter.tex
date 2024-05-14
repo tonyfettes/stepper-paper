@@ -39,7 +39,7 @@ applying a filter to an expression.
 A filter is a tuple of a pattern, an action, and a gas. The pattern
 is a mutated of the term of untyped lambda calculus. Apart from constructs like
 variables, applications, and lambdas, it also includes some new constructs, a
-forall pattern \(\$e\), a value pattern \(\$v\). The action is a tag indicating
+forall pattern \(\PatExpr\), a value pattern \(\PatValue\). The action is a tag indicating
 the action to be taken when the pattern matches an expression. It has two
 form, \(\ActSkip\) and \(\ActStep\). The gas is another tag indicating the
 live time of the effect of a filter. It has two form, \(\GasOne\) and
@@ -114,7 +114,7 @@ filter (3 + 3 + 4, step, one) in
       filter (3 + 3 + 4, step, one) in
       (pause, 0)<
         (skip, 1)<
-          (pause, 0)<(pause, 0)<(*@\(\circ\)@*)>^one + 3>^one + 4
+          (pause, 0)<(pause, 0)<@\(\circ\)@>^one + 3>^one + 4
         >^all
       >^one
     \end{lstlisting}
@@ -126,7 +126,7 @@ filter (3 + 3 + 4, step, one) in
     \begin{lstlisting}[language=hazel]
       filter (1 + 2 + 3 + 4, skip, all) in
       filter (3 + 3 + 4, step, one) in
-      (skip, 1)<((*@\(\circ\)@*) + 3) + 4>^all
+      (skip, 1)<(@\(\circ\)@ + 3) + 4>^all
     \end{lstlisting}
   \item Instruction Transition: The selected expression is instruction-transitioned to a new expression. In this case, the selected expression is \(1 + 2\), which is instruction-transitioned to \(3\) according to the transition rule (T-Add).
 
@@ -327,7 +327,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
 
 \fbox{\(\RuleStepN{e}{e'}{n}\)} Expression \(e\) steps to \(e'\) in \(n\) steps.
 \begin{mathpar}
-  \inferrule[SN-Step]{
+  \inferrule[S-Step]{
     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \\
@@ -337,7 +337,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   }{
     \RuleStepN{e}{e_1}{1}
   } \\
-  \inferrule[SN-Skip]{
+  \inferrule[S-Skip]{
     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \lor e_0 = \Filter{f}{e_0'}\\
@@ -348,7 +348,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   }{
     \RuleStepN{e}{e_2}{n}
   } \\
-  \inferrule[SN-Value]{
+  \inferrule[S-Value]{
     \Value{v}
   }{
     \RuleStepN{v}{v}{0}
@@ -516,7 +516,7 @@ For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), 
 \begin{mathpar}
   \inferrule[V-Lam]{
   }{
-    \Value{\Lam{x}{d}}
+    \Value{\Lam{x}{e}}
   } \qquad
   \inferrule[V-Nat]{
   }{
@@ -586,17 +586,9 @@ For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), 
   }{
     \Matches{\Nat{m}}{\Nat{m}}
   }\\
-  \text{\hxf{I guess we still need to explicitly use equivalence here?}}\\
   \inferrule[M-Lam]{
-    \Lam{x}{e_p} \equiv \Lam{y}{e_e}
   }{
-    \Matches{\Lam{x}{e_p}}{\Lam{y}{e_e}}
-  } \\
-  \text{\hxf{Or we can just write as if they're structurally equivalent?}}\\
-  \inferrule[M-Lam']{
-    \
-  }{
-    \Matches{\Lam{x}{e_p}}{\Lam{y}{e_p}}
+    \Matches{\Lam{x}{e}}{\Lam{y}{e}}
   } \\
   \inferrule[M-Ap]{
     \Matches{p_1}{e_1} \\
@@ -612,13 +604,8 @@ For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), 
   } \qquad
 \end{mathpar}
 
-\mck{M-Lam doesn't allow \$e inside function bodies - is this intentional?}
+% \mck{M-Lam doesn't allow \$e inside function bodies - is this intentional?}
 
-\hxf{This is not \emph{strictly} intentional, i.e. they can be changed. But I cannot really think of any case that we need to use \$e in function bodies.}
-
-% \mck{It might be clearer if we write out a separate recompose judgement too. I think decompose and recompose behave differently especially with regard to do statements}
-
-\fbox{\(\Decompose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \fbox{\(\Decompose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
   \inferrule[D-Var-E]{
@@ -680,12 +667,6 @@ For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), 
     \Decompose{e_1 + e_2}{\circ}{e_1 + e_2}
   }
 \end{mathpar}
-\mck{D-Filter-E rule does not have any filters in it}
-\hxf{Now they have!}
-
-\mck{The last four rules seem to specify an evaluation order - is this desired behaviour? I thought we were going to mention the nondeterminism somewhere in the text}
-
-\hxf{Exactly.}
 
 \fbox{\(\Strip{e} = {e'}\)} Strip filter/do expression in expression \(e\) to get expression \(e'\).
 \[
@@ -727,37 +708,43 @@ For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), 
   }
 \end{mathpar}
 
-\mck{Is FLRes-T redundant since we're using evaluation contexts?}
-
-\hxf{It depends how you treat instruction transition? They are less important than elimination rules}
-
-\mck{ok yeah it would be nice to have a progress property here but I guess we do need types for that...}
-
 \subsection{Properties}
 
-\TODO{Properties}
-\\\\
-Conjecture: Idempotence of Instrumentation (Instrumenting twice should have the same effect as instrumenting once)
+% \TODO{Properties}
+% \\\\
+% Conjecture: Idempotence of Instrumentation (Instrumenting twice should have the same effect as instrumenting once)
 
-$\Instruct{p}{a}{g}{l}{e}{e'} \Rightarrow \Instruct{p}{a}{g}{l}{e'}{e''} \Rightarrow e' = e''$
+% $\Instruct{p}{a}{g}{l}{e}{e'} \Rightarrow \Instruct{p}{a}{g}{l}{e'}{e''} \Rightarrow e' = e''$
 
-\mck{This conjecture is actually not true, because instrumentation always adds more do statements, even if they're already there.}
-\\\\
-Conjecture : Determinism of steps
+% \mck{This conjecture is actually not true, because instrumentation always adds more do statements, even if they're already there.}
+% \\\\
+% Conjecture : Determinism of steps
 
-$\RuleStep{e}{e'} \Rightarrow \RuleStep{e}{e''} \Rightarrow e' = e''$
+% $\RuleStep{e}{e'} \Rightarrow \RuleStep{e}{e''} \Rightarrow e' = e''$
 
-\mck{I think this holds in this calculus, but not in Hazel itself.}
-\\\\
-Conjecture(Unchanging Priorities)
+% \mck{I think this holds in this calculus, but not in Hazel itself.}
+% \\\\
+% Conjecture(Unchanging Priorities)
 
-\(\)
+% \(\)
+
+% \hxf{I believe the Unchanging Priorities does holds. I would phrase it as: the residue statements inserted by the same filter statement has the same priorities (or their priorites keeps in order), even across decays and steppings.}
+
+% Conjecture(Correctness)
+
+\begin{conjecture}[Unchanging Priorities]
+  The priorities of filter should keep the same across instrumentation, decaying and stepping.
+\end{conjecture}
 
 \mck{Since priorities are always re-numbered, we want some sort of conjecture that they remain the same. We could even possibly use this to avoid duplication of `do's?}
 
-\hxf{I believe the Unchanging Priorities does holds. I would phrase it as: the residue statements inserted by the same filter statement has the same priorities (or their priorites keeps in order), even across decays and steppings.}
+\begin{conjecture}[Necessacity of Priorities]
+  It always pick the filter that is closer to the target expression.
+\end{conjecture}
 
-Conjecture(Correctness)
+\begin{conjecture}[Scoped Filter]
+  Behavior of matched expression is specified by the user at least once, or can be traced by to a filter statement or the default.
+\end{conjecture}
 
 \subsection{Statics}
 
@@ -820,11 +807,11 @@ We can extend the definition of filtered stepper calculus to include type.
 
 \fbox{\(\TypeEntails{\Gamma}{p}{\tau}\)} Under typing context \(\Gamma\), expression \(p\) has type \(\tau\).
 \begin{mathpar}
-  \inferrule[TP-WE]{
+  \inferrule[TP-Exp]{
   }{
     \TypeEntails{\Gamma}{\PatExpr}{\tau}
   } \qquad
-  \inferrule[TP-WV]{
+  \inferrule[TP-Val]{
   }{
     \TypeEntails{\Gamma}{\PatValue}{\tau}
   } \\
@@ -857,19 +844,21 @@ We can extend the definition of filtered stepper calculus to include type.
   }
 \end{mathpar}
 
-Theorem(Preservation): If a expression has type \(\tau\), then aftere stepping, the stepped expression also has type \(\tau\).
-\[
-  \forall e, \tau,
-  \TypeEntails{\varnothing}{e}{\tau} \land \RuleStep{e}{e'} \implies \TypeEntails{\varnothing}{e'}{\tau}
-\]
+\begin{theorem}[Preservation]
+  If a expression has type \(\tau\), then after stepping, the stepped expression also has a type \(\tau\).
+  \[
+    \forall e, \tau, n, \Gamma, \qquad
+    \TypeEntails{\Gamma}{e}{\tau} \land \RuleStepN{e}{e'}{n} \implies \TypeEntails{\Gamma}{e'}{\tau}
+  \]
+\end{theorem}
 
-Theorem(Progress): If a expression is well typed, then it can be stepped.
-\[
-  \forall e, \tau,
-  \TypeEntails{\varnothing}{e}{\tau} \implies \RuleStep{e}{e'} \lor \Value{e}
-\]
-
-\TODO{Get filter a simple type system like STLC}
+\begin{theorem}[Progress]
+  If a expression is well typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
+  \[
+    \forall e, \tau,
+    \TypeEntails{\varnothing}{e}{\tau} \implies \exists n. \RuleStepN{e}{e'}{n}
+  \]
+\end{theorem}
 
 %%% Local Variables:
 %%% mode: latex
