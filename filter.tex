@@ -171,7 +171,7 @@ Most of the steps are similar to previous example, so we keep them simple here.
   \begin{lstlisting}[language=hazel]
     pause 1 + 2 in
     eval 1 + 2 + 3 in
-    (eval, 1)<(pause, 0)<(*@\(\circ\)@*)>^one + 3>^all
+    (eval, 1)<(pause, 0)<@\(\circ\)@>^one + 3>^all
   \end{lstlisting}
 
   \item Action selection: The action selection is where the priorities come into play. The action that is closer to the selected expression, and with the highest priority is selected. In this case, the selected action is \(\ActSkip\), and the selected expression is \(1 + 2 + 3\). If we don't have priorities, we will end up selecting \(1 + 2\) with the selected action being \(\ActStep\). This is rather counter-intuitive, as we want the effect of a later filter, like \(Filter{1 + 2 + 3}{\ActSkip, \GasAll}\), to take precedence over the effect of an earlier filter, like \(\Filter{1 + 2}{\ActStep, \GasOne}\).
@@ -180,7 +180,7 @@ Most of the steps are similar to previous example, so we keep them simple here.
   \begin{lstlisting}[language=hazel]
     pause 1 + 2 in
     eval 1 + 2 + 3 in
-    (skip, 1)<(*@\(\circ\)@*) + 3>^all
+    (skip, 1)<@\(\circ\)@ + 3>^all
   \end{lstlisting}
 
   \item Instruction transition: The selected expression is instruction-transitioned to a new expression. In this case, the selected expression is \(1 + 2\), which is instruction-transitioned to \(3\).
@@ -355,9 +355,9 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   }
 \end{mathpar}
 
-\begin{theorem}
-For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), (or equivalently has no free variable in a un-typed system), it can either take an \emph{1 step transition} (SN-Step, SN-Skip) into another expression, or a ``\(0\) steps transition'' into a value (SN-Skip, SN-Value).
-\end{theorem}
+% \begin{theorem}
+% For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), (or equivalently has no free variable in a un-typed system), it can either take an \emph{1 step transition} (SN-Step, SN-Skip) into another expression, or a ``\(0\) steps transition'' into a value (SN-Skip, SN-Value).
+% \end{theorem}
 
 % \hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. Instead, we are reading the result of decomposition.}
 
@@ -760,7 +760,7 @@ We can extend the definition of filtered stepper calculus to include type.
     \end{array}
   \end{equation*}
   \caption{Syntax of Typed Filtered Stepper Calculus. Only definitions of types are listed, refer to Figure~\ref{fig:filter-syntax} for omitted definitions.}
-  \label{fig:filter-syntax}
+  \label{fig:typed-filter-syntax}
 \end{figure}
 
 \fbox{\(\TypeEntails{\Gamma}{e}{\tau}\)} Under typing context \(\Gamma\), expression \(e\) has type \(\tau\).
