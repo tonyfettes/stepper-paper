@@ -2,8 +2,8 @@
 
 %%% Editing Convience Macros
 
-\newif\ifdraft
-\drafttrue
+\newif\ifdraft%
+\drafttrue%
 \newcommand{\TODO}[1]{\ifdraft{\textcolor{red}{\textbf{TODO}: {#1}}}\fi}
 \newcommand{\mck}[1]{\ifdraft{\color{purple}[#1 --Matt]}\fi}
 \newcommand{\hxf}[1]{\ifdraft{\color{blue}[#1 --Haoxiang]}\fi}
@@ -59,8 +59,8 @@
 %% Terms
 
 % Pat
-\newcommand{\PatExpr}{\mathsf{\$e}}
-\newcommand{\PatValue}{\mathsf{\$v}}
+\newcommand{\PatExpr}{\mathtt{\$e}}
+\newcommand{\PatValue}{\mathtt{\$v}}
 
 % Act
 \newcommand{\ActSkip}{\mathsf{skip}}
@@ -74,11 +74,11 @@
 \newcommand{\Nat}[1]{\underline{#1}}
 \newcommand{\Lam}[2]{\lambda #1 . #2}
 
-\newcommand{\Filter}[2]{\KeywordFilter #1 ~\mathsf{in}~ #2}
-\newcommand{\FilterEval}[2]{\KeywordEval #1 ~\mathsf{in}~ #2}
-\newcommand{\FilterHide}[2]{\KeywordHide #1 ~\mathsf{in}~ #2}
-\newcommand{\FilterDebug}[2]{\KeywordDebug #1 ~\mathsf{in}~ #2}
-\newcommand{\FilterPause}[2]{\KeywordPause #1 ~\mathsf{in}~ #2}
+\newcommand{\Filter}[2]{\KeywordFilter{} #1~\mathsf{in}~#2}
+\newcommand{\FilterEval}[2]{\KeywordEval{} #1~\mathsf{in}~#2}
+\newcommand{\FilterHide}[2]{\KeywordHide{} #1~\mathsf{in}~#2}
+\newcommand{\FilterDebug}[2]{\KeywordDebug{} #1~\mathsf{in}~#2}
+\newcommand{\FilterPause}[2]{\KeywordPause{} #1~\mathsf{in}~#2}
 
 \newcommand{\Residue}[4]{\prescript{#1}{#3}{\langle} #4 \rangle^{#2}}
 \newcommand{\ResidueEval}[2]{\KeywordEval \# #1 ~\mathsf{in}~ #2}
@@ -94,36 +94,27 @@
 
 %% Judgments
 
-\newcommand{\FCMark}{\circ}
+\newcommand{\Mark}{\circ}
 
 \newcommand{\Value}[1]{#1~\mathsf{value}}
-\newcommand{\FEStep}[2]{#1 \mapsto #2}
 
-\newcommand{\Decompose}[3]{#1 = #2 \{ #3 \}}
-\newcommand{\Compose}[3]{#1 = #2 \{ #3 \}}
+\newcommand{\Decompose}[3]{#1 \Rightarrow #2 \{ #3 \}}
+\newcommand{\Compose}[3]{#1 \Leftarrow #2 \{ #3 \}}
 
 \newcommand{\Matches}[2]{#1 \mathrel{\mathop{\triangleright}} #2}
-\newcommand{\FPatMatchesExpOp}{\mathrel{\mathop{\triangleright}}}
-\newcommand{\FPatMatchesExp}[2]{#1 \FPatMatchesExpOp #2}
-\newcommand{\FPatNotMatchesExpOp}{\mathrel{\mathop{\not\triangleright}}}
-\newcommand{\FPatNotMatchesExp}[2]{#1 \FPatNotMatchesExpOp #2}
+\newcommand{\DoesNotMatch}[2]{#1 \mathrel{\mathop{\not\triangleright}} #2}
 
-\newcommand{\FPatMatchesCtxOpL}{\mathrel{\mathop{\triangleright_\circ}}}
-\newcommand{\FPatMatchesCtxOpR}{\mathrel{\mathop{\triangleleft_\circ}}}
-\newcommand{\FPatMatchesCtx}[3]{#1 \FPatMatchesCtxOpL #2 \{ #3 \}}
-
-\newcommand{\FInstruct}[3]{#1 \vdash #2 \rightsquigarrow #3}
-\newcommand{\Instruct}[6]{(#1, #2, #3, #4) \vdash #5 \rightsquigarrow #6}
+\newcommand{\InstructF}[3]{#1 \vdash #2 \rightsquigarrow #3}
+\newcommand{\InstructPAGL}[6]{(#1, #2, #3, #4) \vdash #5 \rightsquigarrow #6}
 
 \newcommand{\Analyze}[3]{#1 \vdash #2 \dashv #3}
 
-\newcommand{\FTrans}[2]{#1 \rightarrow #2}
+\newcommand{\Transition}[2]{#1 \rightarrow #2}
 
-\newcommand{\RuleSkip}[2]{#1 \twoheadrightarrow #2}
-\newcommand{\RuleStep}[2]{#1 \mapsto #2}
-\newcommand{\RulePaused}[2]{#1 \twoheadrightarrow^{\ast}_{p} #2}
-\newcommand{\RuleValue}[2]{#1 \twoheadrightarrow^{\ast}_{v} #2}
-\newcommand{\RuleStepN}[3]{#1 \mapsto^{#3} #2}
+\newcommand{\Step}[3]{#1 \twoheadrightarrow^{#3} #2}
+\newcommand{\JustStep}[3]{#1 \mapsto^{#3} #2}
+
+\newcommand{\Strippable}[1]{#1~\mathsf{strippable}}
 
 \newcommand{\FHasType}[3]{#1 \vdash #2 : #3}
 \newcommand{\FInTypeContext}[3]{#1 : #2 \in #3}

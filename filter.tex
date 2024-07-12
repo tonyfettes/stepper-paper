@@ -202,220 +202,107 @@ Most of the steps are similar to previous example, so we keep them simple here.
 
 With the two motivating examples, the rules for the dynamic semantics of the filter calculus is presented as following.
 
-% \TODO{Put decay after instruction-transition.}
-
-% \fbox{\(\RuleStep{e}{e'}\)} Expression \(e\) steps to expression \(e'\).
-% \begin{mathpar}
-%   \inferrule[S-Step]{
-%     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
-%     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-%     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \\
-%     \FTrans{e_0}{e_t} \\
-%     \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
-%     \Compose{e_1}{\mathcal{E}_1}{e_t}
-%   }{
-%     \RuleStep{e}{e_1}
-%   }
-% \end{mathpar}
-
-% \mck{Does this work with 0-step evaluations e.g. skip \$e in 1 + 2 + 3}
-
-% \subsubsection{Solution 1: use separate judgments for skipping, stepping, and value (done)}
-
-% eval = skip all
-% hide = skip one
-% debug = step all
-% pause = step one
-
-% e = 
-% skip all 1 + 2 + 3 in 
-% step one 3 + 3 in 
-% 1 + 2 + 3 + 4 * 5 * 6
-
-% ei = 
-% skip all 1 + 2 + 3 in 
-% step one 3 + 3 in 
-% <1 + 2 + 3> + 4 * 5 * 6
-
-% e0 = 1 + 2
-
-% et = 3
-
-% e1 = 
-% skip all 1 + 2 + 3 in 
-% step one 3 + 3 in 
-% <3 + 3> + 4 * 5 * 6
-
-% |->
-
-% e1' = 
-% skip all 1 + 2 + 3 in 
-% step one 3 + 3 in 
-% <6> + 4 * 5 * 6
-
-
-% 0. zero click judgement
-% 1. 1 click judgement
-%   a. produce contexts + whether they are skipped
-%   b. select one context and take a user step
-%   c. run the zero click judgement
-
-% 1. step judgement
-% 2. skip judgement
-% 3. value judgement
-
-% \fbox{\(\RuleSkip{e}{e'}\)}
-% \begin{mathpar}
-%   \inferrule[S-Skip]{
-%     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
-%     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-%     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \\
-%     \FTrans{e_0}{e_t} \\
-%     \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
-%     \Compose{e_1}{\mathcal{E}_1}{e_t}
-%   }{
-%     \RuleSkip{e}{e_1'}
-%   } \\
-%   \inferrule[S-Filter]{
-%     \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
-%     \Decompose{e_i}{\mathcal{E}_0}{\Filter{f}{e_0}} \\
-%     \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{a} \\
-%     \FTrans{e_0}{e_t} \\
-%     \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
-%     \Compose{e_1}{\mathcal{E}_1}{e_t} \\
-%     \RuleSkip{e_1}{e_1'}
-%   }{
-%     \RuleSkip{e}{e_1'}
-%   }
-% \end{mathpar}
-
-% \fbox{\(\RulePaused{e}{e'}\)} Evaluation of expression \(e\) is skipped-then-paused at \(e'\).
-% \begin{mathpar}
-%   \inferrule[S-Paused-Init]{
-%     \RuleStep{e}{e'}
-%   }{
-%     \RulePaused{e}{e'}
-%   } \qquad
-%   \inferrule[S-Paused-Recur]{
-%     \RuleSkip{e}{e''} \\
-%     \RulePaused{e''}{e'}
-%   }{
-%     \RulePaused{e}{e''}
-%   }
-% \end{mathpar}
-
-% \fbox{\(\RuleValue{e}{v}\)} Expression \(e\) is skipped to a value \(v\).
-% \begin{mathpar}
-%   \inferrule[S-Value-Init]{
-%     \Value{v}
-%   }{
-%     \RuleValue{v}
-%   } \qquad
-%   \inferrule[S-Value-Recur]{
-%     \RuleSkip{e}{e'}\\
-%     \RuleValue{e'}{v}
-%   }{
-%     \RuleValue{e}{v}
-%   }
-% \end{mathpar}
-
-% \begin{theorem}
-% For an expression \(e\) that has type \(\tau\) under typing conting context \(\Gamma\), (or equivalently has no free variable in a untyped system), after skipping some stext \(\Gamma\), (or equivalently has no free variable in a untyped system), after skipping some steps, either it is an value, or it can be transitioned into another expression.
-% \end{theorem}
-
-% \subsubsection{Solution 2: count the number of steps}
-
-\fbox{\(\RuleStepN{e}{e'}{n}\)} Expression \(e\) steps to \(e'\) in \(n\) steps.
+\fbox{\(\Step{e}{e'}{n}\)} Expression \(e\) steps to \(e'\) in \(n\) steps.
 \begin{mathpar}
   \inferrule[S-Step]{
-    \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
+    \InstructPAGL{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \\
-    \FTrans{e_0}{e_t} \\
-    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
-    \Compose{e_1}{\mathcal{E}_1}{e_t}
+    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActStep} \land{} \neg{} (\Strippable{e_0}) \\
+    \Transition{e_0}{e_t} \\
+    \Compose{e_1}{(\Decay{\mathcal{E}_1})}{e_t}
   }{
-    \RuleStepN{e}{e_1}{1}
+    \Step{e}{e_1}{1}
   } \\
   \inferrule[S-Skip]{
-    \Instruct{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
+    \InstructPAGL{\PatExpr}{\ActStep}{\GasOne}{0}{e}{e_i} \\
     \Decompose{e_i}{\mathcal{E}_0}{e_0} \\
-    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \lor e_0 = \Filter{f}{e_0'}\\
-    \FTrans{e_0}{e_t} \\
-    \mathcal{E}_1 = \Decay{\mathcal{E}_0} \\
-    \Compose{e_1}{\mathcal{E}_1}{e_t} \\    
-    \RuleStepN{e_1}{e_2}{n}
+    \Analyze{(\ActStep, 0)}{\mathcal{E}_0}{\ActSkip} \lor \Strippable{e_0}\\
+    \Transition{e_0}{e_t} \\
+    \Compose{e_1}{(\Decay{\mathcal{E}_1})}{e_t} \\    
+    \Step{e_1}{e_2}{n}
   }{
-    \RuleStepN{e}{e_2}{n}
+    \Step{e}{e_2}{n + 1}
   } \\
   \inferrule[S-Value]{
     \Value{v}
   }{
-    \RuleStepN{v}{v}{0}
+    \Step{v}{v}{0}
   }
 \end{mathpar}
 
-% \begin{theorem}
-% For an expression \(e\) that has type \(\tau\) under typing context \(\Gamma\), (or equivalently has no free variable in a un-typed system), it can either take an \emph{1 step transition} (SN-Step, SN-Skip) into another expression, or a ``\(0\) steps transition'' into a value (SN-Skip, SN-Value).
-% \end{theorem}
+\fbox{\(\JustStep{e}{e'}{n}\)} Expression \(e\) takes \(n\) steps to \(e'\), completely ignore the behavior of the filters and residues.
+\begin{mathpar}
+  \inferrule[J-Step]{
+    \Decompose{e}{\mathcal{E}_0}{e_0} \\
+    \Transition{e_0}{e_0'} \\
+    \Compose{e'}{\mathcal{E}_0}{e_0'}
+  }{
+    \JustStep{e}{e'}{1}
+  }
+\end{mathpar}
 
-% \hxf{After some thought, I think the reason that we can see the result of a 0-step evaluations because we are not reading the result \emph{after} the step. Instead, we are reading the result of decomposition.}
+\fbox{\(\Strippable{e}\)} Expression \(e\) can be stripped (non-recursive).
+\begin{mathpar}
+  \inferrule[F-Filter]{
+  }{
+    \Strippable{(\Filter{f}{e})}
+  } \qquad
+  \inferrule[F-Residue]{
+  }{
+    \Strippable{\Residue{a}{g}{l}{e}}
+  }
+\end{mathpar}
 
-\fbox{\(\Instruct{p}{a}{g}{l}{e}{e'}\)} \(e\) is dynamically instructed to \(e'\).
+\fbox{\(\InstructPAGL{p}{a}{g}{l}{e}{e'}\)} \(e\) is dynamically instructed to \(e'\).
 \begin{mathpar}
   \inferrule[I-V]{
     \Value{v}
   }{
-    \Instruct{p}{a}{g}{l}{v}{v}
-  } \\
-  \inferrule[I-Var-Y]{
-    \FPatMatchesExp{p}{x}
-  }{
-    \Instruct{p}{a}{g}{l}{x}{\Residue{a}{g}{l}{x}}
+    \InstructPAGL{p}{a}{g}{l}{v}{v}
   } \qquad
-  \inferrule[I-Var-N]{
-    \FPatNotMatchesExp{p}{x}
+  \inferrule[I-Var]{
+    \Matches{p}{x}
   }{
-    \Instruct{p}{a}{g}{l}{x}{x}
+    \InstructPAGL{p}{a}{g}{l}{x}{x}
   } \\
   \inferrule[I-Filter]{
-    \FInstruct{(p_0, a_0, g_0, l_0)}{e_0}{e} \\
-    \FInstruct{(p, a, g, l_0 + 1)}{e}{e'}
+    \InstructF{(p_0, a_0, g_0, l_0)}{e_0}{e} \\
+    \InstructF{(p, a, g, l_0 + 1)}{e}{e'}
   }{
-    \FInstruct{(p_0, a_0, g_0, l_0)}{\Filter{(p, a, g)}{e_0}}{\Filter{(p, a, g)}{e'}}
+    \InstructF{(p_0, a_0, g_0, l_0)}{\Filter{(p, a, g)}{e_0}}{\Filter{(p, a, g)}{e'}}
   } \\
   \inferrule[I-Residue]{
-    \FInstruct{(p_0, a_0, g_0, l_0)}{e_0}{e} \\
+    \InstructF{(p_0, a_0, g_0, l_0)}{e_0}{e} \\
   }{
-    \FInstruct{(p_0, a_0, g_0, l_0)}{\Residue{a}{g}{l}{e_0}}{\Residue{a}{g}{l}{e}}
+    \InstructF{(p_0, a_0, g_0, l_0)}{\Residue{a}{g}{l}{e_0}}{\Residue{a}{g}{l}{e}}
   } \\
   \inferrule[I-Ap-Y]{
-    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
-    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
-    \FPatMatchesExp{p}{e_1(e_2)}
+    \InstructPAGL{p}{a}{g}{l}{e_1}{e_1'} \\
+    \InstructPAGL{p}{a}{g}{l}{e_2}{e_2'} \\
+    \Matches{p}{e_1(e_2)}
   }{
-    \Instruct{p}{a}{g}{l}{e_1(e_2)}{\Residue{a}{g}{l}{e_1'(e_2')}}
+    \InstructPAGL{p}{a}{g}{l}{e_1(e_2)}{\Residue{a}{g}{l}{e_1'(e_2')}}
   } \\
   \inferrule[I-Ap-N]{
-    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
-    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
-    \FPatNotMatchesExp{p}{e_1(e_2)}
+    \InstructPAGL{p}{a}{g}{l}{e_1}{e_1'} \\
+    \InstructPAGL{p}{a}{g}{l}{e_2}{e_2'} \\
+    \DoesNotMatch{p}{e_1(e_2)}
   }{
-    \Instruct{p}{a}{g}{l}{e_1(e_2)}{e_1'(e_2')}
+    \InstructPAGL{p}{a}{g}{l}{e_1(e_2)}{e_1'(e_2')}
   } \\
   \inferrule[I-Add-Y]{
-    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
-    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
-    \FPatMatchesExp{p}{e_1 + e_2}
+    \InstructPAGL{p}{a}{g}{l}{e_1}{e_1'} \\
+    \InstructPAGL{p}{a}{g}{l}{e_2}{e_2'} \\
+    \Matches{p}{e_1 + e_2}
   }{
-    \Instruct{p}{a}{g}{l}{e_1(e_2)}{\Residue{a}{g}{l}{e_1' + e_2'}}
+    \InstructPAGL{p}{a}{g}{l}{e_1(e_2)}{\Residue{a}{g}{l}{e_1' + e_2'}}
   } \\
   \inferrule[I-Add-N]{
-    \Instruct{p}{a}{g}{l}{e_1}{e_1'} \\
-    \Instruct{p}{a}{g}{l}{e_2}{e_2'} \\
-    \FPatNotMatchesExp{p}{e_1 + e_2}
+    \InstructPAGL{p}{a}{g}{l}{e_1}{e_1'} \\
+    \InstructPAGL{p}{a}{g}{l}{e_2}{e_2'} \\
+    \DoesNotMatch{p}{e_1 + e_2}
   }{
-    \Instruct{p}{a}{g}{l}{e_1(e_2)}{e_1' + e_2'}
+    \InstructPAGL{p}{a}{g}{l}{e_1(e_2)}{e_1' + e_2'}
   }
 \end{mathpar}
 
@@ -503,7 +390,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
 \fbox{\(\DefCtx \mathcal{E}\)} Context \(\mathcal{E}\).
 \[
   \DefCtx \mathcal{E}
-  = \FCMark
+  = \Mark
   \mid \mathcal{E}(d)
   \mid d(\mathcal{E})
   \mid \mathcal{E} + d
@@ -555,24 +442,6 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   \end{aligned}
 \]
 
-% \hxf{Shall we use different notation for patterns?}
-
-% \TODO{swap order to [v/x]e}
-
-% \TODO{missing filter and do cases}
-
-% \TODO{missing number literal and addition cases}
-
-% \TODO{use e instead of d everywhere}
-
-% \TODO{substitution into patterns}
-
-% \TODO{fix Lam macro}
-
-% \TODO{combine decompose and recompose?}
-
-% \TODO{add function that removes do one to formalism}
-
 \fbox{\(\Matches{p}{e}\)} means that pattern \(p\) matches expression \(e\).
 \begin{mathpar}
   \inferrule[M-All]{\ }{
@@ -580,13 +449,14 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   } \qquad
   \inferrule[M-Val]{\Value{v}}{
     \Matches{\$v}{v}
-  } \\
+  } \qquad
   \inferrule[M-Nat]{
     \
   }{
     \Matches{\Nat{m}}{\Nat{m}}
-  }\\
+  } \quad
   \inferrule[M-Lam]{
+    \
   }{
     \Matches{\Lam{x}{e}}{\Lam{y}{e}}
   } \\
@@ -604,34 +474,31 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   } \qquad
 \end{mathpar}
 
-% \mck{M-Lam doesn't allow \$e inside function bodies - is this intentional?}
-
-\fbox{\(\Decompose{d}{\mathcal{E}}{d'}\)} Expression \(d\) can be obtained by putting expression \(d'\) into the mark of \(\mathcal{E}\).
+\fbox{\(\Decompose{e}{\mathcal{E}}{e'}\)} Expression \(e\) can be obtained by putting expression \(e'\) into the mark of \(\mathcal{E}\).
 \begin{mathpar}
-  \inferrule[D-Var-E]{
-  }{
-    \Decompose{x}{\FCMark}{x}
-  } \\
+  % Residue
   \inferrule[D-Residue-T]{
     \Decompose{e}{\mathcal{E}}{e'}
   }{
     \Decompose{\Residue{a}{g}{l}{e}}{\Residue{a}{g}{l}{{\mathcal{E}}}}{e'}
-  } \\
+  } \qquad
   \inferrule[D-Residue-E]{
     \Value{v}
   }{
     \Decompose{\Residue{a}{g}{l}{v}}{\circ}{\Residue{a}{g}{l}{v}}
   } \\
+  % Filter
   \inferrule[D-Filter-T]{
     \Decompose{e}{\mathcal{E}}{e'}
   }{
     \Decompose{\Filter{f}{e}}{\Filter{f}{\mathcal{E}}}{e'}
-  } \\
+  } \qquad
   \inferrule[D-Filter-E]{
     \Value{v}
   }{
     \Decompose{\Filter{f}{v}}{\circ}{\Filter{f}{v}}
   } \\
+  % Application
   \inferrule[D-Ap-L]{
     \Decompose{e_1}{\mathcal{E}_1}{e_1'}
   }{
@@ -649,6 +516,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   }{
     \Decompose{e_1(e_2)}{\circ}{e_1(e_2)}
   } \\
+  % Addition
   \inferrule[D-Add-L]{
     \Decompose{e_1}{\mathcal{E}_1}{e_1'}
   }{
@@ -668,43 +536,81 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
   }
 \end{mathpar}
 
+\fbox{\(\Compose{e}{\mathcal{E}}{e'}\)} Expression \(e\) can be obtained by putting expression \(e'\) into the mark of \(\mathcal{E}\).
+\begin{mathpar}
+  \inferrule[C-Top]{
+  }{
+    \Compose{e}{\circ}{e}
+  } \\
+  \inferrule[C-Ap-L]{
+    \Compose{e_1}{\mathcal{E}_1}{e_1'}
+  }{
+    \Compose{e_1(e_2)}{\mathcal{E}_1(e_2)}{e_2'}
+  } \qquad
+  \inferrule[C-Ap-R]{
+    \Compose{e_2}{\mathcal{E}}{e_2'}
+  }{
+    \Compose{e_1(e_2)}{e_1(\mathcal{E}_2)}{e_2'}
+  } \\
+  \inferrule[C-Add-L]{
+    \Compose{e_1}{\mathcal{E}_1}{e_1'}
+  }{
+    \Compose{e_1 + e_2}{\mathcal{E}_1 + e_2}{e_1'}
+  } \qquad
+  \inferrule[C-Add-R]{
+    \Compose{e_2}{\mathcal{E}_2}{e_2'}
+  }{
+    \Compose{e_1 + e_2}{e_1 + \mathcal{E}_2}{e_2'}
+  } \\
+  \inferrule[C-Filter]{
+    \Compose{e}{\mathcal{E}}{e'}
+  }{
+    \Compose{\Filter{f}{e}}{\Filter{f}{\mathcal{E}}}{e'}
+  } \qquad
+  \inferrule[C-Residue]{
+    \Compose{e}{\mathcal{E}}{e'}
+  }{
+    \Compose{\Residue{a}{g}{l}{e}}{\mathcal{E}}{e'}
+  }
+\end{mathpar}
+
 \fbox{\(\Strip{e} = {e'}\)} Strip filter/do expression in expression \(e\) to get expression \(e'\).
 \[
   \begin{aligned}
     \Strip{x} &= x \\
     \Strip{\Lam{x}{e}} &= \Lam{x}{\Strip{e}} \\
-    \Strip{e_1(e_2)} &= (\Strip{e_1})(\Strip{e_2}) \\
-    \Strip{\Nat{n}} &= \Strip{\Nat{b}} \\
-    \Strip{e_1 + e_2} &= (\Strip{e_1}) + (\Strip{e_2}) \\
-    \Strip{\Filter{(p, a, g)}{e}} &= \Strip{e} \\
+    \Strip{(e_1(e_2))} &= (\Strip{e_1})(\Strip{e_2}) \\
+    \Strip{\Nat{n}} &= \Nat{n} \\
+    \Strip{(e_1 + e_2)} &= (\Strip{e_1}) + (\Strip{e_2}) \\
+    \Strip{(\Filter{f}{e})} &= \Strip{e} \\
     \Strip{\Residue{a}{g}{l}{e}} &= \Strip{e}
   \end{aligned}
 \]
 
-\fbox{\(\FTrans{e}{e'}\)} \(e\) takes an instruction transition to \(e'\).
+\fbox{\(\Transition{e}{e'}\)} \(e\) takes an instruction transition to \(e'\).
 \begin{mathpar}
-  \inferrule[T-Lam]{
+  \inferrule[T-Ap]{
     \Value{e_1} \\
     \Value{e_2}
   }{
-    \FTrans{(\Lam{x}{e_1})(e_2)}{\FSubst{e_2}{x}{e_1}}
-  } \qquad
+    \Transition{(\Lam{x}{e_1})(e_2)}{\FSubst{e_2}{x}{e_1}}
+  } \\
   \inferrule[T-Add]{
     \Value{n_1} \\
     \Value{n_2} \\
     n_1 + n_2 = n
   }{
-    \FTrans{\Nat{n_1} + \Nat{n_2}}{\Nat{n}}
+    \Transition{\Nat{n_1} + \Nat{n_2}}{\Nat{n}}
   } \\
   \inferrule[T-Residue]{
     \Value{v}
   }{
-    \FTrans{\Residue{a}{g}{l}{v}}{v}
+    \Transition{\Residue{a}{g}{l}{v}}{v}
   } \qquad
   \inferrule[T-Filter]{
     \Value{v}
   }{
-    \FTrans{\Filter{f}{v}}{v}
+    \Transition{\Filter{f}{v}}{v}
   }
 \end{mathpar}
 
@@ -714,7 +620,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
 % \\\\
 % Conjecture: Idempotence of Instrumentation (Instrumenting twice should have the same effect as instrumenting once)
 
-% $\Instruct{p}{a}{g}{l}{e}{e'} \Rightarrow \Instruct{p}{a}{g}{l}{e'}{e''} \Rightarrow e' = e''$
+% $\InstructPAGL{p}{a}{g}{l}{e}{e'} \Rightarrow \InstructPAGL{p}{a}{g}{l}{e'}{e''} \Rightarrow e' = e''$
 
 % \mck{This conjecture is actually not true, because instrumentation always adds more do statements, even if they're already there.}
 % \\\\
@@ -738,13 +644,21 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
 
 \mck{Since priorities are always re-numbered, we want some sort of conjecture that they remain the same. We could even possibly use this to avoid duplication of `do's?}
 
-\begin{conjecture}[Necessacity of Priorities]
-  It always pick the filter that is closer to the target expression.
-\end{conjecture}
+% \begin{conjecture}[Necessacity of Priorities]
+%   It always pick the filter that is closer to the target expression.
+% \end{conjecture}
 
-\begin{conjecture}[Scoped Filter]
-  Behavior of matched expression is specified by the user at least once, or can be traced by to a filter statement or the default.
-\end{conjecture}
+% \begin{conjecture}[Scoped Filter]
+%   Behavior of matched expression is specified by the user at least once, or can be traced by to a filter statement or the default.
+% \end{conjecture}
+
+\begin{theorem}[Simulation]
+  If an expression \(e\) take \(n\) steps to become \(e'\), then the stripped down version of \(e\), which is \(\Strip{e}\), will takes \(m\) steps to become \(\Strip{e'}\) for some \(m\).
+  \[
+    \forall e, n, e', \qquad
+    \Step{e}{e'}{n} \implies \exists m, \JustStep{\Strip{e}}{\Strip{e'}}{m}
+  \]
+\end{theorem}
 
 \subsection{Statics}
 
@@ -848,19 +762,14 @@ We can extend the definition of filtered stepper calculus to include type.
   If a expression has type \(\tau\), then after stepping, the stepped expression also has a type \(\tau\).
   \[
     \forall e, \tau, n, \Gamma, \qquad
-    \TypeEntails{\Gamma}{e}{\tau} \land \RuleStepN{e}{e'}{n} \implies \TypeEntails{\Gamma}{e'}{\tau}
+    \TypeEntails{\Gamma}{e}{\tau} \land \Step{e}{e'}{n} \implies \TypeEntails{\Gamma}{e'}{\tau}
   \]
 \end{theorem}
 
 \begin{theorem}[Progress]
-  If a expression is well typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
+  If an expression is well typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
   \[
-    \forall e, \tau,
-    \TypeEntails{\varnothing}{e}{\tau} \implies \exists n. \RuleStepN{e}{e'}{n}
+    \forall e, \tau, \qquad
+    \TypeEntails{\varnothing}{e}{\tau} \implies \exists e' . \Step{e}{e'}{1}
   \]
 \end{theorem}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: "main"
-%%% End:
