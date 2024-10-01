@@ -303,7 +303,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \DoesNotMatch{p}{e_1 + e_2}
   }{
     \InstructPAGL{p}{a}{g}{l}{e_1(e_2)}{e_1' + e_2'}
-  }
+  } \\
 \end{mathpar}
 
 % \mck{I think there's some preservation of priority property to prove here, since the numbers are re-generated on every pass.}
@@ -384,7 +384,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \Analyze{(a, l)}{\mathcal{E}}{a'}
   }{
     \Analyze{(a_0, l_0)}{\Residue{a}{\GasAll}{l}{\mathcal{E}}}{a'}
-  }
+  } \\
 \end{mathpar}
 
 \fbox{\(\DefCtx \mathcal{E}\)} Context \(\mathcal{E}\).
@@ -424,6 +424,8 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     [v / x] \Lam{y}{e} &= \Lam{y}{e} && \text{if } x = y \\
     [v / x] \Filter{(p, a, g)}{e} &= \Filter{([v / x]p, a, g)}{[v / x] e} \\
     [v / x] \Residue{a}{g}{l}{e} &= \Residue{a}{g}{l}{[v / x] e} \\
+    [v / x] \Fix{x}{e} &= \Fix{x}{e} \\
+    [v / x] \Fix{y}{e} &= \Fix{y}{[v / x]e} && \text{if } x \neq y
   \end{aligned}
 \]
 
@@ -439,6 +441,8 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     [v / x] (p_1 + p_2) &= ([v / x] p_1) + ([v / x] p_2) \\
     [v / x] \Lam{y}{e} &= \Lam{y}{[v / x] e} && \text{if } x \neq y \\
     [v / x] \Lam{y}{e} &= \Lam{y}{e} && \text{if } x = y \\
+    [v / x] \Fix{x}{e} &= \Fix{x}{e} \\
+    [v / x] \Fix{y}{e} &= \Fix{y}{[v / x]e} && \text{if } x \neq y
   \end{aligned}
 \]
 
@@ -454,11 +458,16 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \
   }{
     \Matches{\Nat{m}}{\Nat{m}}
-  } \quad
+  } \\
   \inferrule[M-Lam]{
-    \
+    \Strip{e_1} \equiv \Strip{e_2}
   }{
-    \Matches{\Lam{x}{e}}{\Lam{y}{e}}
+    \Matches{\Lam{x_1}{e_1}}{\Lam{x_2}{e_2}}
+  } \qquad
+  \inferrule[M-Fix]{
+    \Strip{e_1} \equiv \Strip{e_2}
+  }{
+    \Matches{\Fix{x_1}{e_1}}{\Fix{x_2}{e_2}}
   } \\
   \inferrule[M-Ap]{
     \Matches{p_1}{e_1} \\
@@ -471,7 +480,7 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \Matches{p_2}{e_2}
   }{
     \Matches{p_1 + p_2}{e_1 + e_2}
-  } \qquad
+  }
 \end{mathpar}
 
 \fbox{\(\Decompose{e}{\mathcal{E}}{e'}\)} Expression \(e\) can be obtained by putting expression \(e'\) into the mark of \(\mathcal{E}\).
@@ -533,6 +542,11 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \Value{e_2}
   }{
     \Decompose{e_1 + e_2}{\circ}{e_1 + e_2}
+  } \\
+  \inferrule[D-Fix-E]{
+    \
+  }{
+    \Decompose{\Fix{x}{e}}{\circ}{\Fix{x}{e}}
   }
 \end{mathpar}
 
@@ -583,7 +597,8 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \Strip{\Nat{n}} &= \Nat{n} \\
     \Strip{(e_1 + e_2)} &= (\Strip{e_1}) + (\Strip{e_2}) \\
     \Strip{(\Filter{f}{e})} &= \Strip{e} \\
-    \Strip{\Residue{a}{g}{l}{e}} &= \Strip{e}
+    \Strip{\Residue{a}{g}{l}{e}} &= \Strip{e} \\
+    \Strip{\Fix{x}{e}} &= \Fix{x}{\Strip{e}}
   \end{aligned}
 \]
 
@@ -611,6 +626,74 @@ With the two motivating examples, the rules for the dynamic semantics of the fil
     \Value{v}
   }{
     \Transition{\Filter{f}{v}}{v}
+  } \\
+  \inferrule[T-Fix]{
+    \
+  }{
+    \Transition{\Fix{x}{e}}{[\Fix{x}{e} / x] e}
+  }
+\end{mathpar}
+
+\fbox{\(\IsResidue{e}\)} \(e\) is a residue.
+\begin{mathpar}
+  \inferrule[Is-Residue]{
+    \
+  }{
+    \IsResidue{\Residue{a}{g}{l}{e}}
+  }
+\end{mathpar}
+
+\fbox{\(\Optimize{e}{e'}\)} \(e\) is optimized to \(e'\)
+\begin{mathpar}
+  \inferrule[O-Var]{
+    \
+  }{
+    \Optimize{x}{x}
+  } \quad
+  \inferrule[O-Val]{
+    \Value{e}
+  }{
+    \Optimize{e}{e}
+  } \\
+  \inferrule[O-Ap]{
+    \Optimize{e_l}{e_l'} \\
+    \Optimize{e_r}{e_r'}
+  }{
+    \Optimize{e_l(e_r)}{e_l'(e_r')}
+  } \quad
+  \inferrule[O-Add]{
+    \Optimize{e_l}{e_l'} \\
+    \Optimize{e_r}{e_r'}
+  }{
+    \Optimize{e_l + e_r}{e_l' + e_r'}
+  } \\
+  \inferrule[O-Filter]{
+    \Optimize{e}{e'}
+  }{
+    \Optimize{\Filter{f}{e}}{\Filter{f}{e'}}
+  } \\
+  \inferrule[O-Residue-Inner]{
+    l_i > l_o \\
+    \Optimize{\Residue{a_i}{g_i}{l_i}{e}}{e'}
+  }{
+    \Optimize{\Residue{a_o}{g_o}{l_o}{\Residue{a_i}{g_i}{l_i}{e}}}{e'}
+  } \quad
+  \inferrule[O-Residue-Outer]{
+    l_i \leq l_o \\
+    \Optimize{\Residue{a_o}{g_o}{l_o}{e}}{e'}
+  }{
+    \Optimize{\Residue{a_o}{g_o}{l_o}{\Residue{a_i}{g_i}{l_i}{e}}}{e'}
+  } \quad
+  \inferrule[O-Residue-Other]{
+    \neg{(\IsResidue{e})} \\
+    \Optimize{e}{e'}
+  }{
+    \Optimize{\Residue{a}{g}{l}{e}}{e'}
+  } \\
+  \inferrule[O-Fix]{
+    \
+  }{
+    \Optimize{\Fix{x}{e}}{\Fix{x}{e}}
   }
 \end{mathpar}
 
@@ -716,6 +799,11 @@ We can extend the definition of filtered stepper calculus to include type.
     \TypeEntails{\Gamma}{e}{\tau}
   }{
     \TypeEntails{\Gamma}{\Residue{a}{g}{l}{e}}{\tau}
+  } \\
+  \inferrule[TE-Fix]{
+    \TypeEntails{\TypeExtends{\Gamma}{x}{\tau}}{e}{\tau}
+  }{
+    \TypeEntails{\Gamma}{\Fix{x}{e}}{\tau}
   }
 \end{mathpar}
 
@@ -755,6 +843,11 @@ We can extend the definition of filtered stepper calculus to include type.
     \TypeEntails{\Gamma}{e_2}{\Natural}
   }{
     \TypeEntails{\Gamma}{e_1 + e_2}{\Natural}
+  } \qquad
+  \inferrule[TP-Fix]{
+    \TypeEntails{\TypeExtends{\Gamma}{x}{\tau}}{e}{\tau}
+  }{
+    \TypeEntails{\Gamma}{\Fix{x}{e}}{\tau}
   }
 \end{mathpar}
 
@@ -773,3 +866,8 @@ We can extend the definition of filtered stepper calculus to include type.
     \TypeEntails{\varnothing}{e}{\tau} \implies \exists e' . \Step{e}{e'}{1}
   \]
 \end{theorem}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "main"
+%%% End:
