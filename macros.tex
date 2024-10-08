@@ -18,7 +18,9 @@
   basicstyle=\ttfamily\color{black},
   keywords={
     let, in, case, end, type,
-    eval, pause, hide, debug, filter, do,
+    eval, stop, hide, step, debug,
+    fun,
+    if, then, else,
   },
   keywordstyle=\bfseries\color{black},
   commentstyle=\color{gray},
@@ -49,7 +51,7 @@
 \DeclareMathOperator{\DefFilter}{Filter}
 \DeclareMathOperator{\DefTyp}{Typ}
 \DeclareMathOperator{\DefTypCtx}{TypCtx}
-\DeclareMathOperator{\KeywordFilter}{filter}
+\DeclareMathOperator{\KeywordFilter}{debug}
 \DeclareMathOperator{\KeywordHide}{hide}
 \DeclareMathOperator{\KeywordEval}{eval}
 \DeclareMathOperator{\KeywordPause}{pause}
@@ -76,10 +78,10 @@
 \newcommand{\Fix}[2]{\mu #1 . #2}
 
 \newcommand{\Filter}[2]{\KeywordFilter{} #1~\mathsf{in}~#2}
-\newcommand{\FilterEval}[2]{\KeywordEval{} #1~\mathsf{in}~#2}
-\newcommand{\FilterHide}[2]{\KeywordHide{} #1~\mathsf{in}~#2}
-\newcommand{\FilterDebug}[2]{\KeywordDebug{} #1~\mathsf{in}~#2}
-\newcommand{\FilterPause}[2]{\KeywordPause{} #1~\mathsf{in}~#2}
+\newcommand{\FilterEval}[2]{\KeywordFilter{} \KeywordEval{}(#1)~\mathsf{in}~#2}
+\newcommand{\FilterHide}[2]{\KeywordFilter{} \KeywordHide{}(#1)~\mathsf{in}~#2}
+\newcommand{\FilterDebug}[2]{\KeywordFilter{} \KeywordDebug{}(#1)~\mathsf{in}~#2}
+\newcommand{\FilterPause}[2]{\KeywordFilter{} \KeywordPause{}(#1)~\mathsf{in}~#2}
 
 \newcommand{\Residue}[4]{\prescript{#1}{#3}{\langle} #4 \rangle^{#2}}
 \newcommand{\ResidueEval}[2]{\KeywordEval \# #1 ~\mathsf{in}~ #2}

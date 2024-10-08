@@ -53,7 +53,9 @@ indicating the priority of the residue.
 
 \subsection{Contextual Dynamics}
 
-The contextual dynamics of the filtered stepper calculus builds around the stepping judgment. This judgment establish the contextual behavior of the stepper.
+The contextual dynamics of the filtered stepper calculus builds around
+the stepping judgment. This judgment establish the contextual behavior
+of the stepper.
 
 There are two main operations in our semantics, one is to \emph{skip} the
 evaluation of an expression, the other is to \emph{pause} at a certain point of
@@ -68,139 +70,348 @@ not possible within current pattern definition as in
 Figure.~\ref{fig:filter-syntax}, we treat them specially to make sure these
 steps are hidden and is not visible to users.
 
-We will first see two examples going through how should we or user interpreter these two rules, the gives the formal definitions of the judgment and all preceding judgment, including judgment for instrumentation, decomposition/re-composition, instruction-transition, and most importantly, stepping.
+We will first see two examples going through how should we or user
+interpreter these two rules, the gives the formal definitions of the
+judgment and all preceding judgment, including judgment for
+instrumentation, decomposition/re-composition, instruction-transition,
+and most importantly, stepping.
 
 % \TODO{motivate the two rules}
 
 \subsubsection{Examples and Motivations}
 
-Consider the example below:
+Consider the following Hazel program:
 \lstset{xleftmargin=1in}
-\begin{lstlisting}[language=hazel]
-eval 1 + 2 + 3 + 4 in
-pause 3 + 3 + 4 in
-1 + 2 + 3 + 4
-\end{lstlisting}
+\begin{lstlisting}[language=hazel,caption={A simple Hazel program}]
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+1 + 2 + 3 + 4\end{lstlisting}
 
-It turns into the following in the calculus:
-\begin{lstlisting}[language=hazel]
-filter (1 + 2 + 3 + 4, skip, all) in
-filter (3 + 3 + 4, step, one) in
-1 + 2 + 3 + 4
-\end{lstlisting}
+This Hazel program will go through several steps as listed below, to
+be evaluated against the order specified by the user.
 
 \begin{enumerate}
-  \item Instrumentation: At this step, we transverse the expression recursively and collect filters we have seen. Then for each sub-expression, we test if the sub-expression matches any of the filters we have seen. If it does, we insert a residue expression with the filter information around the matched sub-expression.
+\item \emph{Instrumentation}. \label{num:simple_example_instrument} At
+  this step, we transverse the expression recursively and collect all
+  the filters along the path. Then for each sub-expression, we test if
+  the sub-expression matches any of the collected filters. If it does,
+  we insert a residue expression with the filter information around
+  the matched sub-expression.
 
-  If we start with an empty set, we might end up with a empty matching result and the stepper will have no clue what kind of action to take. Therefore, we set the default behavior to be stepping through the evaluation of every expression.
+  If we start with an empty set of filters, we might end up in a
+  situation where there is no sub-expression in the program that
+  matches any of the filters. In that situation, the stepper won't be
+  able to decide to skip over or stop at a step during evaluation.
+  Therefore, we set the default behavior to be stepping through the
+  evaluation of every expression.
 
-  Here, we apply two filters to the expression \(1 + 2 + 3 + 4\), one is \(\Filter{1 + 2 + 3 + 4}{\ActSkip, \GasAll}\), the other is \(\Filter{3 + 3 + 4}{\ActStep, \GasOne}\). During the application of the first filter, we find out that the sub-expression \(1 + 2 + 3 + 4\) matches the pattern \(1 + 2 + 3 + 4\), so we insert a residue expression \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) around the sub-expression (I-Add-Y). We then get an instrumented expression as:
+  In our example above, we apply 3 filters to the expression
+  \lstinline[language=hazel]{1 + 2 + 3 + 4}. One of them is the
+  default filter that gets prepend to every user program, and the
+  other two is written by the user.
+
+  \begin{enumerate}
+  \item \lstinline[language=hazel]{debug stop($e)}
+  \item \lstinline[language=hazel]{debug eval(1 + 2 + 3 + 4)}
+  \item \lstinline[language=hazel]{debug stop(3 + 3 + 4)}
+  \end{enumerate}
+
+  During the instrumenting of the first filter, we find out that the
+  sub-expression \lstinline[language=hazel]{1 + 2 + 3 + 4} matches the
+  pattern \lstinline[language=hazel]{1 + 2 + 3 + 4}, so we instrument
+  the matched expression by wrapping it in a internal language
+  construct called residue expression
+  \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) around the sub-expression
+  (I-Add-Y). The instrumented expression is in Listing~\ref{lst:simple_example_instrument}.
+
+  \begin{lstlisting}[language=hazel,caption={Program after instrumentation},label={lst:simple_example_instrument}]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(\rangle^{\GasAll}
+\rangle^{\GasOne}\)@\end{lstlisting}
+
+  However, during the instrumenting of the second filter, there is no
+  sub-expression that matches the pattern
+  \lstinline[language=hazel]{3 + 3 + 4}, so no residue expression is
+  inserted around the sub-expression (I-Add-N). The instrumented
+  expression remains the same.
+
+\item \emph{Optimization}. The stepper might have insert too many
+  residue expression in the instrumentation step, and this could
+  probably cause a significant slowdown of the stepper. Therefore,
+  some redundant residue expressions are optimized out during this
+  step.
+
+  Generally, we want to remove all immediately adjacent residue
+  expressions by picking the one with higest priority, because this is
+  the only one that can be picked among these residue expressions
+  during the action selection process. Here, the most outward two
+  residue expressions are adjacent:
+  \(\Residue{\ActStep}{\GasOne}{0}{\Residue{\ActSkip}{\GasAll}{1}{\ldots}}\),
+  we remove the ones with lower priorities (O-Residue-Inner) to get
+  \(\Residue{\ActSkip}{\GasAll}{1}{\ldots}\).
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={Program after instrumentation, optimized},
+]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+\item \emph{Decomposition}. \label{num:simple_example_decompose} The
+  expression is then decomposed into an evaluation context and a
+  selected expression. The instrumented expression from last step can
+  be decomposed by recursively decomposing addition (D-Add-L) and
+  residue expression (D-Residue), into an evaluation context
+  (Listing~\ref{lst:simple_example_decompose}) and a selected
+  expression \lstinline{1 + 2}
+
+  \begin{lstlisting}[language=hazel,caption={Decomposed evaluation context},label={lst:simple_example_decompose}]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\circ{\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+\item \emph{Action Selection}. \label{num:simple_example_select}
+  Select an action from the evaluation context. The action is chosen
+  first by their priority, then by their distance to the mark
+  (\(\circ\)) in the evaluation context. In this case, we transverse
+  the expression using (A-Add-L) and update the selected action
+  accordingly. The action \(\ActSkip\) is selected, and the expression
+  itself is kept the same.
+
+\item \emph{Residue removal (Decaying)}. Residue expressions that
+  has life-time of one is removed from the expression. This step is
+  done using the \(\Decay\) function. The expression after the removal
+  of the residue expression is:
+  \begin{lstlisting}[language=hazel,caption={Evaluation context after decaying},label={lst:simple_example_decay}]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(\prescript{\ActSkip}{1}{\langle}\circ\)@ + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
+
+\item \emph{User selection}. If the selected expression produced in
+  the Step~\ref{num:simple_example_decompose} is of the form
+  \lstinline[language=hazel]{debug .. in ..} or
+  \(\Residue{a}{g}{l}{e}\), or the selected action from
+  Step~\ref{num:simple_example_select} is \(\ActSkip\), the stepper
+  will skip over this step and goes into the next step. (S-Filter and
+  S-Skip). Otherwise, the stepper will yield the control to the user,
+  and let them to choose which next possible step to take. (S-Step)
+
+  In this case, the selected action is \(\ActSkip\). Therefore, the stepper
+  will skipping over this step and goes into the next step.
+
+\item \emph{Instruction Transition}. The selected expression is
+  instruction-transitioned to a new expression. In this case, selected
+  expression \lstinline[language=hazel]{1 + 2} is
+  instruction-transitioned to \lstinline[language=hazel]{3} according
+  to the transition rule (T-Add).
+
+\item \emph{Composition}: When the selected-expression is
+  instruction-transitioned to a new expression, we need to compose the
+  transitioned selected expression with evaluation context to get the
+  updated expression. The rules for composition is the same as the
+  rules for decomposition, but instead, we start from rule (D-Add-L)
+  to build up the recomposed expression in a bottom-up way. The
+  recomposed expression is:
   \begin{lstlisting}[language=hazel]
-    filter ($e, pause, one) in
-    filter (1 + 2 + 3 + 4, skip, all) in
-    filter (3 + 3 + 4, step, one) in
-    (pause, 0)<
-      (skip, 1)<
-        (pause, 0)<(pause, 0)<1 + 2>^one + 3>^one + 4
-      >^all
-    >^one
-  \end{lstlisting}
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(\prescript{\ActSkip}{1}{\langle}\)@3 + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
 
-  However, during the application of the second filter, there is no sub-expression that matches the pattern \(3 + 3 + 4\), so no residue expression is inserted around the sub-expression (I-Add-N). The instrumented expression remains the same.
-
-  \item Decomposition: The expression is decomposed into an evaluation context and selected expression. The instrumented expression from last step can be decomposed by recursively decomposing addition (D-Add-L) and residue expression (D-Residue). The decomposed evaluation context looks like this:
-    \begin{lstlisting}[language=hazel]
-      filter (1 + 2 + 3 + 4, skip, all) in
-      filter (3 + 3 + 4, step, one) in
-      (pause, 0)<
-        (skip, 1)<
-          (pause, 0)<(pause, 0)<@\(\circ\)@>^one + 3>^one + 4
-        >^all
-      >^one
-    \end{lstlisting}
-    and a selected expression \lstinline{1 + 2}
-
-  \item Action Selection: Select an action from the evaluation context. The action that is closer to the selected expression, and with the highest priority is selected. In this case, we transverse the expression using (A-Add-L) and update the selected action when we retreat.The action \(\ActSkip\) is selected, and the expression itself is kept the same.
-
-  \item Residue removal: The residue expression that has life-time of one is removed from the expression. This step is done using the \(\Decay\) function. The expression after the removal of the residue expression is:
-    \begin{lstlisting}[language=hazel]
-      filter (1 + 2 + 3 + 4, skip, all) in
-      filter (3 + 3 + 4, step, one) in
-      (skip, 1)<(@\(\circ\)@ + 3) + 4>^all
-    \end{lstlisting}
-  \item Instruction Transition: The selected expression is instruction-transitioned to a new expression. In this case, the selected expression is \(1 + 2\), which is instruction-transitioned to \(3\) according to the transition rule (T-Add).
-
-  \item Re-composition: When the selected-expression is instruction-transitioned to a new expression, we need to recompose the transitioned selected expression with evaluation context to get the updated expression. The rules for re-composition is the same as the rules for decomposition, but instead, we start from rule (D-Add-L) to build up the recomposed expression in a bottom-up way. The recomposed expression is:
-    \begin{lstlisting}[language=hazel]
-      filter (1 + 2 + 3 + 4, skip, all) in
-      filter (3 + 3 + 4, step, one) in
-      (skip, 1)<3 + 3 + 4>^all
-    \end{lstlisting}
-
-  \item If the selected expression (before instruction-transition) is a filter expression, i.e. it is either of form \(\Filter{f}{e}\) or \(\Residue{a}{g}{l}{e}\), then the stepper will not display the step to the user, and directly go to the next step (S-Filter). This helps to hide the filter expressions from the user.
-
-  \item Otherwise, if the action is \(\ActStep\), then the stepper pause at this step exhibiting the evaluating context and the selected expression to user. (S-Step)
-
-  \item If the action is \(\ActSkip\), then the stepper will skip the selected expression and continue stepping. (S-Skip) In this case, the selected expression is \(1 + 2\), and the selected action is \(\ActSkip\), so the stepper will skip this step, which is calculating the value of \(1 + 2\) to be \(3\).
-
-  \item The final result of the stepping is:
-    \begin{lstlisting}[language=hazel]
-      filter (1 + 2 + 3 + 4, skip, all) in
-      filter (3 + 3 + 4, step, one) in
-      (skip, 1)<3 + 3 + 4>^all
-    \end{lstlisting}
+\item \emph{Recursion}. As long as we don't get a value, we will keep
+  stepping through the expression, i.e. goes back to
+  Step~\ref{num:simple_example_instrument}.
 \end{enumerate}
 
-In the example above, we have briefly explored how instrumentation, action selection,  decomposition, and transition works, and how the stepper is able to decide what to do next. However, it does not explain why we need a priorities to get the right selected action. Here is an example demonstrating why we need priorities in the residue expressions:
-\begin{lstlisting}[language=hazel]
-pause 1 + 2 in
-eval 1 + 2 + 3 in
-1 + 2 + 3
+In the following round of the procedure, the program is first
+instrumented (Listing~\ref{lst:simple_example_1_instrument}), then get
+decomposed into an evaluation context
+(Listing~\ref{lst:simple_example_1_decompose}) with a selected
+expression \lstinline[language=hazel]{3 + 3}.
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={Instrumented program in Round 2},
+  label={lst:simple_example_1_instrument}
+]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{2}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\)@3 + 3@\(
+\rangle^{\GasOne}
+\)@ + 4@\(
+\rangle^{\GasOne}
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={Decomposed evaluation context in Round 2},
+  label={lst:simple_example_1_decompose}
+]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{2}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\circ
+\rangle^{\GasOne}
+\)@ + 4@\(
+\rangle^{\GasOne}
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+Then, we computed the selected action to be \(\ActStep\). Therefore,
+the stepper stops at this step and let user to choose which
+sub-expression should be evaluated for the next step, by clicking the
+yellow area as shown in the Figure~\ref{fig:simple_example_final_ui}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/filter-example-user-select.png}
+  \caption{User Interface for the \emph{User Selection} Step.}\label{fig:simple_example_final_ui}
+\end{figure}
+
+Let's take a look at another motivating example. Suppose a first-year
+student in college is learn the concept of recursion by writing a
+simple recursive function to calculate the n-th term of the Fibonacci
+sequence. They would probably write a Hazel program like the one in Listing~\ref{lst:filter_example_fib_program}
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={A Hazel program that calculates the n-th term of the Fibonacci sequence},
+  label={lst:filter_example_fib_program}
+]
+debug eval($e) in
+let fib = fun n ->
+  if n == 1 then
+    1
+  else
+    fib(n - 1) + fib(n - 2)
+in
+debug stop(fib($v)) in
+fib(3)
 \end{lstlisting}
 
-Most of the steps are similar to previous example, so we keep them simple here.
+The stepper will go through a similar process to determine how to
+evaluate the program and when to stop and yield the control to the
+user through the user interface.
+
 \begin{enumerate}
-  \item\label{agl:priority-example-instr} Instrumentation: The instrumentation process is not affected by the priorities. After instrumentation, the expression looks like:
-  \begin{lstlisting}[language=hazel]
-    pause 1 + 2 in
-    eval 1 + 2 + 3 in
-    (eval, 1)<(pause, 0)<1 + 2>^one + 3>^all
-  \end{lstlisting}
-
-  \item Decomposition: This step is also not affected by the priorities. The expression is decomposed into an evaluation context and a selected expression. The selected expression is \(1 + 2\). The evaluation context is:
-  \begin{lstlisting}[language=hazel]
-    pause 1 + 2 in
-    eval 1 + 2 + 3 in
-    (eval, 1)<(pause, 0)<@\(\circ\)@>^one + 3>^all
-  \end{lstlisting}
-
-  \item Action selection: The action selection is where the priorities come into play. The action that is closer to the selected expression, and with the highest priority is selected. In this case, the selected action is \(\ActSkip\), and the selected expression is \(1 + 2 + 3\). If we don't have priorities, we will end up selecting \(1 + 2\) with the selected action being \(\ActStep\). This is rather counter-intuitive, as we want the effect of a later filter, like \(Filter{1 + 2 + 3}{\ActSkip, \GasAll}\), to take precedence over the effect of an earlier filter, like \(\Filter{1 + 2}{\ActStep, \GasOne}\).
-
-  \item Residue removal: The residue expression that has life-time of one is removed from the expression using function \(\Decay\). The expression after the removal of the residue expression is:
-  \begin{lstlisting}[language=hazel]
-    pause 1 + 2 in
-    eval 1 + 2 + 3 in
-    (skip, 1)<@\(\circ\)@ + 3>^all
-  \end{lstlisting}
-
-  \item Instruction transition: The selected expression is instruction-transitioned to a new expression. In this case, the selected expression is \(1 + 2\), which is instruction-transitioned to \(3\).
-
-  \item Re-composition: The instruction-transitioned expression \(3\) is recomposed with the evaluation context to get the updated expression:
-  \begin{lstlisting}[language=hazel]
-    pause 1 + 2 in
-    eval 1 + 2 + 3 in
-    (skip, 1)<3 + 3>^all
-  \end{lstlisting}
-
-  \item Because we have selected the \(\ActSkip\) action, the stepper will not stop here but instead goes to the step~\ref{agl:priority-example-instr} and continue stepping.
-
-  \item All the following stepping steps ends up being skipped, so the final result of the stepping is the value of the expression:
-  \begin{lstlisting}[language=hazel]
-    6
-  \end{lstlisting}
+\item \emph{Instrumentation}.
+\begin{lstlisting}[language=hazel]
+debug eval($e) in
+@\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
+     if n == 1 then
+       1
+     else
+       fib(n - 1) + fib(n - 2)
+   in
+   debug stop(fib($v)) in
+   @\(
+\prescript{\ActSkip}{0}{\langle}
+\prescript{\ActStep}{1}{\langle}
+\)@fib(3)@\(
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\rangle^{\GasAll}
+\)@
+\end{lstlisting}
+\item \emph{Decomposition}. The program can be decomposed into an
+  evaluation context (Listing~\ref{lst:filter_example_fib_decompose}) and a selected expression \lstinline[language=hazel]{fib(3)}.
+\begin{lstlisting}[
+  language=hazel,
+  caption={Decomposed evaluation context of the program},
+  label={lst:filter_example_fib_decompose}
+]
+debug eval($e) in
+@\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
+     if n == 1 then
+       1
+     else
+       fib(n - 1) + fib(n - 2)
+   in
+   debug stop(fib($v)) in
+   @\(
+\prescript{\ActSkip}{0}{\langle}
+\prescript{\ActStep}{1}{\langle}
+\circ
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+\item \emph{Action selection}. The selected action is \(\ActStep\) in this case.
+\item \emph{Residue Removal}. In this case, the residue removal process doesn't do anything.
+\item \emph{User select}. Since the stepper selected the action
+  \(\ActStep\), it will stop here and yield its control to user.
+\item \emph{Instruction Transition}. The selected expression will be instruction-transitioned to
+\begin{lstlisting}[language=hazel]
+if 3 == 1 then
+  1
+else
+  fib(3 - 1) + fib(3 - 2)\end{lstlisting}
+\item \emph{Composition}.
+\begin{lstlisting}[
+  language=hazel,
+  caption={Decomposed evaluation context of the program},
+  label={lst:filter_example_fib_decompose}
+]
+debug eval($e) in
+@\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
+     if n == 1 then
+       1
+     else
+       fib(n - 1) + fib(n - 2)
+   in
+   debug stop(fib($v)) in
+   @\(
+\prescript{\ActSkip}{0}{\langle}
+\prescript{\ActStep}{1}{\langle}
+\)@if 3 == 1 then
+            1
+          else
+            fib(3 - 1) + fib(3 - 2)@\(
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\rangle^{\GasAll}
+\)@\end{lstlisting}
 \end{enumerate}
 
-With the two motivating examples, the rules for the dynamic semantics of the filter calculus is presented as following.
+With the two motivating examples, the rules for the dynamic semantics
+of the filter calculus is presented as following.
 
 \fbox{\(\Step{e}{e'}{n}\)} Expression \(e\) steps to \(e'\) in \(n\) steps.
 \begin{mathpar}
