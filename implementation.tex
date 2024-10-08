@@ -1,18 +1,47 @@
 \subsection{Mini Stepper}
 
-A substitution based small-stepper evaluator of simply-typed lambda calculus with
-fix point. The evaluator is implemented in OCaml, and is used to test the the
-correctness of the behaviour as specify as the semantic rules in the paper.
+A substitution based small-stepper evaluator of simply-typed lambda
+calculus with fix point. The evaluator is implemented in OCaml, and is
+used to test the the correctness of the behaviour as specify as the
+semantic rules in the paper.
 
 \subsection{Hazel Implementation}
 
-talk about how the big step + small step evaluator abstractions
+Hazel internally applies an big-step, environment-based dynamic
+semantics: it helps to avoid unnecesarry substitutions, and can be
+generally optimized using tail-call optimization. However, since Hazel
+is being used as an instruction tool for a functional programming
+course, it would be helpful if it can simulate the substitution-based
+semantics when students are explorering this concept.
 
-environment-based evaluator + post-processing when showing in substitution mode
+To unify the internal implementation of the stepper, we keep one copy
+of the dynamic semantic rules, and having the big-step evaluator and
+small-step evaluator interpret the DSL. To simulate the substitution
+behavior, we postpocess the output of the stepper, so that all
+variable are displayed as it they are substituted, even though the
+evaluator/stepper haven't got to that part.
 
-Optimisation for of the stepper filter: how we remove redundant filters (while
-insure the correctness of the implementation?)
+Small-stepper with filter-calculus takes much more computational
+resources than the big-step evaluator. Therefore, we applied many
+techniques to improve the performance:
 
-Equivalency of function:
-\TODO{compare closure & structural equivalence of the body expression}
-Finally we will move to UUID.
+\begin{enumerate}
+\item During filter-match, we always perform a comparsion for the
+  physical equality of two OCaml object.
+\item We convert an expression to its locally nameless representation
+  to compare the alpha-equivalence during matching.
+\item We applied some normalization rules to reduce the size of the
+  intermediate expression.
+\end{enumerate}
+
+% talk about how the big step + small step evaluator abstractions
+
+% environment-based evaluator + post-processing when showing in
+% substitution mode
+
+% Optimisation for of the stepper filter: how we remove redundant
+% filters (while insure the correctness of the implementation?)
+
+% Equivalency of function:
+% \TODO{compare closure & structural equivalence of the body expression}
+% Finally we will move to UUID.
