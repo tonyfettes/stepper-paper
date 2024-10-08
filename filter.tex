@@ -326,89 +326,70 @@ debug stop(fib($v)) in
 fib(3)
 \end{lstlisting}
 
-The stepper will go through a similar process to determine how to
-evaluate the program and when to stop and yield the control to the
-user through the user interface.
+% The stepper will go through a similar process to determine how to
+% evaluate the program and when to stop and yield the control to the
+% user through the user interface. To reduce the verbosity, we only
+% state 
 
-\begin{enumerate}
-\item \emph{Instrumentation}.
-\begin{lstlisting}[language=hazel]
-debug eval($e) in
-@\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
-     if n == 1 then
-       1
-     else
-       fib(n - 1) + fib(n - 2)
-   in
-   debug stop(fib($v)) in
-   @\(
-\prescript{\ActSkip}{0}{\langle}
-\prescript{\ActStep}{1}{\langle}
-\)@fib(3)@\(
-\rangle^{\GasOne}
-\rangle^{\GasAll}
-\rangle^{\GasAll}
-\)@
-\end{lstlisting}
-\item \emph{Decomposition}. The program can be decomposed into an
-  evaluation context (Listing~\ref{lst:filter_example_fib_decompose}) and a selected expression \lstinline[language=hazel]{fib(3)}.
-\begin{lstlisting}[
-  language=hazel,
-  caption={Decomposed evaluation context of the program},
-  label={lst:filter_example_fib_decompose}
-]
-debug eval($e) in
-@\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
-     if n == 1 then
-       1
-     else
-       fib(n - 1) + fib(n - 2)
-   in
-   debug stop(fib($v)) in
-   @\(
-\prescript{\ActSkip}{0}{\langle}
-\prescript{\ActStep}{1}{\langle}
-\circ
-\rangle^{\GasOne}
-\rangle^{\GasAll}
-\rangle^{\GasAll}
-\)@\end{lstlisting}
-\item \emph{Action selection}. The selected action is \(\ActStep\) in this case.
-\item \emph{Residue Removal}. In this case, the residue removal process doesn't do anything.
-\item \emph{User select}. Since the stepper selected the action
-  \(\ActStep\), it will stop here and yield its control to user.
-\item \emph{Instruction Transition}. The selected expression will be instruction-transitioned to
-\begin{lstlisting}[language=hazel]
-if 3 == 1 then
-  1
-else
-  fib(3 - 1) + fib(3 - 2)\end{lstlisting}
-\item \emph{Composition}.
-\begin{lstlisting}[
-  language=hazel,
-  caption={Decomposed evaluation context of the program},
-  label={lst:filter_example_fib_decompose}
-]
-debug eval($e) in
-@\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
-     if n == 1 then
-       1
-     else
-       fib(n - 1) + fib(n - 2)
-   in
-   debug stop(fib($v)) in
-   @\(
-\prescript{\ActSkip}{0}{\langle}
-\prescript{\ActStep}{1}{\langle}
-\)@if 3 == 1 then
-            1
-          else
-            fib(3 - 1) + fib(3 - 2)@\(
-\rangle^{\GasOne}
-\rangle^{\GasAll}
-\rangle^{\GasAll}
-\)@\end{lstlisting}
-\end{enumerate}
+% \begin{enumerate}
+% \item \emph{Instrumentation, Decomposition, and Residue Removal}. The program can be decomposed into an
+%   evaluation context (Listing~\ref{lst:filter_example_fib_decompose}) and a selected expression \lstinline[language=hazel]{fib(3)}.
+% \begin{lstlisting}[
+%   language=hazel,
+%   caption={Decomposed evaluation context of the program},
+%   label={lst:filter_example_fib_decompose}
+% ]
+% debug eval($e) in
+% @\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
+%      if n == 1 then
+%        1
+%      else
+%        fib(n - 1) + fib(n - 2)
+%    in
+%    debug stop(fib($v)) in
+%    @\(
+% \prescript{\ActSkip}{0}{\langle}
+% \prescript{\ActStep}{1}{\langle}
+% \circ
+% \rangle^{\GasOne}
+% \rangle^{\GasAll}
+% \rangle^{\GasAll}
+% \)@\end{lstlisting}
+% \item \emph{Action selection and User selection}. Since the stepper
+%   selected the action \(\ActStep\), it will stop here and yield its
+%   control to user.
+% \item \emph{Instruction Transition, Composition, and Decomposition in
+%     the next round}. The decomposition in Round 2 yields an evaluation
+%   context as in Listing~\ref{lst:filter_example_fib_decompose} and a selected expression
+%   \lstinline[language=hazel]{3 == 1}
+% \begin{lstlisting}[
+%   language=hazel,
+%   caption={Decomposed evaluation context of the program},
+%   label={lst:filter_example_fib_decompose}
+% ]
+% debug eval($e) in
+% @\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
+%      if n == 1 then
+%        1
+%      else
+%        fib(n - 1) + fib(n - 2)
+%    in
+%    debug stop(fib($v)) in
+%    @\(
+% \prescript{\ActSkip}{0}{\langle}
+% \prescript{\ActStep}{1}{\langle}
+% \)@if @\(\circ\)@ then
+%             1
+%           else
+%             fib(3 - 1) + fib(3 - 2)@\(
+% \rangle^{\GasOne}
+% \rangle^{\GasAll}
+% \rangle^{\GasAll}
+% \)@\end{lstlisting}
+% \item \emph{Action Selections and User Interaction}. The selected
+%   action is \(\ActSkip\). This step is skipped. 
+% \item \emph{}
+% \end{enumerate}
 
 With the two motivating examples, the rules for the dynamic semantics
 of the filter calculus is presented as following.
