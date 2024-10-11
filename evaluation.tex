@@ -8,14 +8,38 @@
 
 \subsubsection{Quantitative Feedback}
 
-\begin{tikzpicture}
-  \begin{axis}[
-    ybar
-    ]
-    \addplot coordinates {
-      };
-  \end{axis}
-\end{tikzpicture}
+We use the stepper calculus during the lecturing of the course EECS
+490 at University of Michigan. To better understanding how the stepper
+calculus helps students to understand the behavior of their program,
+we collected anonymous data from students during one of their
+assignments. The number of steps used by studens is shown in the
+Figure~\ref{fig:eval-num-steps}.
+
+\begin{figure}[h]
+  \centering
+  \begin{minipage}{.40\linewidth}
+    \begin{subfigure}{\linewidth}
+      \includegraphics[width=\textwidth]{images/data-steps-2024-w24-a1.png}
+      \caption{Winter 2024, sample size 33}
+      \label{fig:eval-num-steps-w24}
+    \end{subfigure}
+  \end{minipage}
+  \quad
+  \begin{minipage}{.40\linewidth}
+    \begin{subfigure}{\linewidth}
+      \includegraphics[width=\textwidth]{images/data-steps-2024-f24-a1.png}
+      \caption{Fall 2024, sample size 20}
+      \label{fig:eval-num-steps-f24}
+    \end{subfigure}
+  \end{minipage}
+  \caption{Number of steps used by EECS 490 students}
+  \label{fig:eval-num-steps}
+\end{figure}
+
+As we can see, the number of steps used by students roughly conforms
+to a exponential distribution. This implies a small portion of
+students use the stepper extensively, while most of the students just
+briefly tried it or not using it at all.
 
 %%% Local Variables:
 %%% mode: LaTeX
