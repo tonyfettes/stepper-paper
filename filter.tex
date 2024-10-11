@@ -1059,6 +1059,21 @@ We can extend the definition of filtered stepper calculus to include type.
   \]
 \end{theorem}
 
+
+\subsection{Agda Mechanization}
+
+We mechanize both the dynamic and static semantics of the stepper
+calculus in Agda, as well as the proofs of the preservation, progress,
+and simulation properties we have proposed in previous sections. We
+introduces de-Bruijn indices in our Agda mechanization, as a way to
+implement \(\alpha\)-equivalence during the filter-matching
+process. To mitigate the complexity of de-Bruijn indices, we fused
+the operation of substitution and function application into one
+function, so that many structurally possible invalid state (for
+example, shift-down a variable with index 0) are
+eliminated. Additionally, we used well-founded recursion to proof the
+terminating of the instrumentation and optimization process.
+
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "main"
