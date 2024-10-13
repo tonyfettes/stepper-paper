@@ -4,6 +4,20 @@
 
 \subsection{Assignment Integration}
 
+The assignments we evaluated our stepper on usually consist of several
+tasks, each tasks ask students to implement or complete a function to
+pass given unit tests. To help students better focus on their task, we
+have provided some prelude Hazel definitions that students can
+directly use in their assignments. We do not want the students to be
+able to inspect the evaluation of the prelude program, as this would
+break the imaginary narrative that all these prelude content already
+exists in the environment. Therefore, we insert a
+\lstinline[language=hazel]{debug hide($e)} at the very top of the
+program, and a \lstinline[language=hazel]{debug stop($e)} before the
+user program. Whenever the user turn the stepper on, it will skip the
+execution of the prelude section and stop at the entrance of the user
+program.
+
 \subsubsection{Qualitative Feedback}
 
 \subsubsection{Quantitative Feedback}
