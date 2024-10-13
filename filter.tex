@@ -913,11 +913,11 @@ of the filter calculus is presented as following.
 
 % Conjecture(Correctness)
 
-\begin{conjecture}[Unchanging Priorities]
-  The priorities of filter should keep the same across instrumentation, decaying and stepping.
-\end{conjecture}
+% \begin{conjecture}[Unchanging Priorities]
+%   The priorities of filter should keep the same across instrumentation, decaying and stepping.
+% \end{conjecture}
 
-\mck{Since priorities are always re-numbered, we want some sort of conjecture that they remain the same. We could even possibly use this to avoid duplication of `do's?}
+% \mck{Since priorities are always re-numbered, we want some sort of conjecture that they remain the same. We could even possibly use this to avoid duplication of `do's?}
 
 % \begin{conjecture}[Necessacity of Priorities]
 %   It always pick the filter that is closer to the target expression.
@@ -927,7 +927,32 @@ of the filter calculus is presented as following.
 %   Behavior of matched expression is specified by the user at least once, or can be traced by to a filter statement or the default.
 % \end{conjecture}
 
-\begin{theorem}[Simulation]
+We want the (Typed) Filtered Stepper Calculus to conform to some most
+basic properties of its base calculus (Typed) Lambda Calculus.
+Theorem~\ref{thm:preservation} states that for every well-typed
+expression, every step during the evaluation of the expression will
+yield a same type. Theorem~\ref{thm:progress} says that we won't get
+stuck during the evaluation. Theorem~\ref{thm:simulation} shows that
+the behavior of the Filtered Stepper Calculus can be simulated
+asynchronously by Untyped Lambda Calculus.
+
+\begin{theorem}[Preservation]\label{thm:preservation}
+  If a expression has type \(\tau\), then after stepping, the stepped expression also has a type \(\tau\).
+  \[
+    \forall e, \tau, n, \Gamma, \qquad
+    \TypeEntails{\Gamma}{e}{\tau} \land \Step{e}{e'}{n} \implies \TypeEntails{\Gamma}{e'}{\tau}
+  \]
+\end{theorem}
+
+\begin{theorem}[Progress]\label{thm:progress}
+  If an expression is well typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
+  \[
+    \forall e, \tau, \qquad
+    \TypeEntails{\varnothing}{e}{\tau} \implies \exists e' . \Step{e}{e'}{1}
+  \]
+\end{theorem}
+
+\begin{theorem}[Simulation]\label{thm:simulation}
   If an expression \(e\) take \(n\) steps to become \(e'\), then the stripped down version of \(e\), which is \(\Strip{e}\), will takes \(m\) steps to become \(\Strip{e'}\) for some \(m\).
   \[
     \forall e, n, e', \qquad
@@ -1042,23 +1067,6 @@ We can extend the definition of filtered stepper calculus to include type.
     \TypeEntails{\Gamma}{\Fix{x}{e}}{\tau}
   }
 \end{mathpar}
-
-\begin{theorem}[Preservation]
-  If a expression has type \(\tau\), then after stepping, the stepped expression also has a type \(\tau\).
-  \[
-    \forall e, \tau, n, \Gamma, \qquad
-    \TypeEntails{\Gamma}{e}{\tau} \land \Step{e}{e'}{n} \implies \TypeEntails{\Gamma}{e'}{\tau}
-  \]
-\end{theorem}
-
-\begin{theorem}[Progress]
-  If an expression is well typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
-  \[
-    \forall e, \tau, \qquad
-    \TypeEntails{\varnothing}{e}{\tau} \implies \exists e' . \Step{e}{e'}{1}
-  \]
-\end{theorem}
-
 
 \subsection{Agda Mechanization}
 
