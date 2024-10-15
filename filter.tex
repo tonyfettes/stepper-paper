@@ -305,26 +305,26 @@ yellow area as shown in the Figure~\ref{fig:simple_example_final_ui}
   \caption{User Interface for the \emph{User Selection} Step.}\label{fig:simple_example_final_ui}
 \end{figure}
 
-Let's take a look at another motivating example. Suppose a first-year
-student in college is learn the concept of recursion by writing a
-simple recursive function to calculate the n-th term of the Fibonacci
-sequence. They would probably write a Hazel program like the one in Listing~\ref{lst:filter_example_fib_program}
+% Let's take a look at another motivating example. Suppose a first-year
+% student in college is learn the concept of recursion by writing a
+% simple recursive function to calculate the n-th term of the Fibonacci
+% sequence. They would probably write a Hazel program like the one in Listing~\ref{lst:filter_example_fib_program}
 
-\begin{lstlisting}[
-  language=hazel,
-  caption={A Hazel program that calculates the n-th term of the Fibonacci sequence},
-  label={lst:filter_example_fib_program}
-]
-debug eval($e) in
-let fib = fun n ->
-  if n == 1 then
-    1
-  else
-    fib(n - 1) + fib(n - 2)
-in
-debug stop(fib($v)) in
-fib(3)
-\end{lstlisting}
+% \begin{lstlisting}[
+%   language=hazel,
+%   caption={A Hazel program that calculates the n-th term of the Fibonacci sequence},
+%   label={lst:filter_example_fib_program}
+% ]
+% debug eval($e) in
+% let fib = fun n ->
+%   if n == 1 then
+%     1
+%   else
+%     fib(n - 1) + fib(n - 2)
+% in
+% debug stop(fib($v)) in
+% fib(3)
+% \end{lstlisting}
 
 % The stepper will go through a similar process to determine how to
 % evaluate the program and when to stop and yield the control to the
@@ -391,8 +391,9 @@ fib(3)
 % \item \emph{}
 % \end{enumerate}
 
-With the two motivating examples, the rules for the dynamic semantics
-of the filter calculus is presented as following.
+The motivating examples above has demonstrate briefly how the filter
+calculus evaluates, which is modeled by the following rules for the
+dynamic semantics of the filter calculus.
 
 \fbox{\(\Step{e}{e'}{n}\)} Expression \(e\) steps to \(e'\) in \(n\) steps.
 \begin{mathpar}
