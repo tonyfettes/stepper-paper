@@ -44,14 +44,32 @@ In some circumstances, seeing the full length of the execution trace can be dist
     \caption{A filtered stepper for showing recursive calls in the list map example.}
 \end{figure}
 
-Each filter has a pattern that triggers the filter. The \verb|$e| pattern matches any expression, and the \verb|$v| pattern matches any fully-evaluated expression. \verb|map($v, $v)| is a pattern that matches any map expression applied to two fully-evaluated expressions. More details on the patterns are given in \TODO{ref}
+Each filter has a pattern that triggers the filter. The \verb|$e|
+pattern matches any expression, and the \verb|$v| pattern matches any
+fully-evaluated expression. \verb|map($v, $v)| is a pattern that
+matches any map expression applied to two fully-evaluated
+expressions. More details on the patterns are given in
+the judgement for pattern matching (\fbox{\(\Matches{p}{e}\)}).
 
-The \verb|hide| construct hides a step that matches the pattern, thus \verb|hide $e| hides all steps. The \verb|pause| construct shows a step that matches the pattern. Since it comes later, the \verb|pause map($v, $v)| overrides the \verb|hide| expression to show any steps taken from an expression that contains a \verb|map| applied to two values. More details are given on the ordering of filters in \TODO{ref}
+The \verb|hide| construct hides a step that matches the pattern, thus
+\verb|hide $e| hides all steps. The \verb|stop| construct shows a
+step that matches the pattern. Since it comes later, the
+\verb|debug stop(map($v, $v))| overrides the \verb|hide| expression to show
+any steps taken from an expression that contains a \verb|map| applied
+to two values.
+% More details are given on the ordering of filters in
+% \TODO{ref}
 
-The \verb|hide| and \verb|pause| constructs each only hide or show one step. We also provide two more constructs, \verb|eval| and \verb|debug| that hide or show all evaluation steps for a subexpression that matches the given filter. 
+The \verb|hide| and \verb|pause| constructs each only hide or show one
+step. We also provide two more constructs, \verb|eval| and
+\verb|debug| that hide or show all evaluation steps for a
+subexpression that matches the given filter.
 
-For example, in figure \autoref{fig:debug-map} we have added a debug filter that shows the full trace of each application of \verb|f|. We can see in \autoref{fig:debug-trace} that this leads to not only showing steps that apply \verb|f|, but also the multiplication that takes place to evaluate \verb|f(x)|.
-
+For example, in figure \autoref{fig:debug-map} we have added a debug
+filter that shows the full trace of each application of \verb|f|. We
+can see in \autoref{fig:debug-trace} that this leads to not only
+showing steps that apply \verb|f|, but also the multiplication that
+takes place to evaluate \verb|f(x)|.
 
 \begin{figure}
     \centering
@@ -73,9 +91,13 @@ For example, in figure \autoref{fig:debug-map} we have added a debug filter that
     \caption{A filtered stepper that demonstrates debug mode.}
 \end{figure}
 
-Note that this \verb|debug| statement overrides the \verb|pause| and \verb|eval| statement because of the dynamic scoping of filters, given in \TODO{ref}
-
-
+Note that this \verb|debug| statement overrides the \verb|pause| and
+\verb|eval| statement because of the dynamic scoping of filters, which
+is achieved by instruct the expression every step and selected the
+closest filter to the part where the next step happens (See
+Step~\ref{num:simple_example_decompose} in
+Section~\ref{sec:filter_example} for more detailed description on
+this).
 
 % \subsection{Matching}
 
