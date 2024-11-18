@@ -87,6 +87,15 @@ debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 1 + 2 + 3 + 4\end{lstlisting}
 
+It is a simple program, with a user intention that to sum up from 1 to
+4. The plus operation in Hazel is binary and left-associative,
+therefore the expression \lstinline[language=hazel]{1 + 2 + 3 + 4} is
+first evaluated to \lstinline[language=hazel]{3 + 3 + 4} by first
+evaluate \lstinline[language=hazel]{1 + 2} to
+\lstinline[language=hazel]{3}, and then
+\lstinline[langauge=hazel]{6 + 4}, and finally
+\lstinline[language=hazel]{10}
+
 This Hazel program will go through several steps as listed below, to
 be evaluated against the order specified by the user.
 
