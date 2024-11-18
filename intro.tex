@@ -1,128 +1,122 @@
-Debugger has been one of the most important tools that students and programmer
-use to learn the behavior of their programs. Well-established debuggers such as
-GDB, LLDB, and Visual Studio Debugger have been widely used in industry and
-academia. These debuggers provide rich set of tools for user to inspect and even
-change various aspects of a running program, such as memory, variables,
-and call stacks. However, they also suffers from several limitations.
+The debugger has been one of the most important tools that students and programmers
+use to understand the behavior of their programs. Well-established debuggers such as
+GDB, LLDB, and Visual Studio Debugger are widely used in industry and
+academia. These debuggers provide a rich set of tools for users to inspect and even
+modify various aspects of a running program, such as memory, variables,
+and call stacks. However, they also suffer from several limitations.
 
 \begin{enumerate}
-  \item They are tailored for imperative languages like C or C++. They are not
+  \item They are tailored for imperative languages like C or C++ and are not
     well-suited for functional languages, where memory is usually managed by
-    GC and never directly manipulated by the programmer.
+    garbage collection and is not directly manipulated by the programmer.
   \item Many of them support stepping in and stepping over instructions. However,
-    these two instructions can be tedious to use when the program is large and
-    complex. The user has to step through many instructions that are not relevant
+    these options can be tedious to use when the program is large and
+    complex, as the user has to step through many instructions that are irrelevant
     to the current task.
   \item They are not well-suited for teaching. They are designed for professional
     programmers who are already familiar with the language and the program they
-    are debugging. They are not well-suited for beginners who are learning the
+    are debugging. They are not ideal for beginners learning the
     language and the program.
 \end{enumerate}
 
-We recognized some key capabilities in these traditional debuggers do
-help programmers a lot, and we think it will be also helpful to have
-them as well in a debugger for functional programming languages.
+We recognize that some key capabilities in traditional debuggers
+significantly aid programmers, and we believe it would also be useful to incorporate
+these features in a debugger for functional programming languages.
 \begin{enumerate}
-  \item Evaluation can be paused at some point and resumed later. The user
-    should be able specify where/when the evaluation should be paused. This is
-    usually implemented as the breakpoint mechanism in a traditional debugger.
-  \item Paused evaluation can be stepped through. traditionally, debuggers will
-    provide user with three buttons to ``step through'', ``step over'' and
-    ``step out''.
+  \item Evaluation can be paused at specific points and resumed later. Users
+    should be able to specify when and where evaluation should be paused, typically
+    implemented through breakpoints in traditional debuggers.
+  \item Paused evaluations can be stepped through. Traditionally, debuggers provide
+    users with three options: ``step through,'' ``step over,'' and ``step out.''
 \end{enumerate}
 
-Moreover, we want some extra capabilities that are specific to functional
-programming languages and a classroom settings, especially Hazel, to be a
-useful tool for teaching and learning functional programming.
+Furthermore, we want to introduce additional capabilities tailored specifically to functional
+programming languages and classroom settings, especially in the context of Hazel, to make it a
+valuable tool for teaching and learning functional programming.
 \begin{enumerate}
-  \item It can skip the stepping process of some \emph{kind} of expression.
-  \item It controls the evaluation of the program in a granularity of
-    expression, instead of a granularity of line or instruction.
-  \item The evaluation order of Hazel is not specified. Therefore, an
-    expression that is not value might have multiple possible choice,
-    and we think it is helpful to model this property in the debugger.
+  \item It can skip the stepping process for certain \emph{kinds} of expressions.
+  \item It controls program evaluation at the expression level rather than at
+    the line or instruction level.
+  \item Hazel’s evaluation order is unspecified, so expressions that are not values
+    may have multiple evaluation paths. We believe it is helpful to model this property
+    in the debugger.
 \end{enumerate}
 
-% To serve as a good tool for understanding the behaviour of a program, the stepper
-% filter should have consistent behaviour with the semantics of the language. Hazel
-% internally uses a environment-based big-step evaluator to evaluate the program,
-% but it has a consistent behaviour with the substitution-based one. Therefore,
-% the stepper filter shall not exhibit different behaviour when building upon a
-% environment-based evaluator or a substitution-based evaluator.
+% To serve as a good tool for understanding program behavior, the stepper
+% filter should be consistent with the semantics of the language. Hazel
+% uses an environment-based big-step evaluator to evaluate programs,
+% which is consistent with a substitution-based evaluator. Therefore,
+% the stepper filter should not exhibit different behavior when built on
+% an environment-based or a substitution-based evaluator.
 
-Therefore, we want to develop a new kind of debugger that tailored for
-functional languages and is well-suited for teaching in Hazel. Hazel is a pure
-functional language that supports working with incomplete programs. It is used
-in a upper-level programming languages course where we are teaching
-substitution-based equational semantics -- we want the steps to show up as
-justified proof steps, to mirror what we have previously done in lectures and
-written assignments.
+We aim to develop a new kind of debugger tailored for
+functional languages and suitable for teaching in Hazel. Hazel is a pure
+functional language that supports working with incomplete programs and is used
+in an upper-level programming languages course, where we teach
+substitution-based equational semantics. We want the steps to be presented as
+justified proof steps, mirroring what we cover in lectures and assignments.
 
 % \TODO{(example here of a simple equational stepping proof)}
 
-One of the main challenges in using such a debugger in lecturing is
-that it is often tedious to step through a program. Students has to
-witness many boring instructions that are not relevant to the current
-task, or that they already well understand. Those instructions will
-litter the proof and obscure the key idea. Our approach is to develop
-a scoped filter system that allows us to write patterns that tells the
-stepper the evaluation of which expressions should be skipped or paused.
+One of the main challenges in using such a debugger in lectures is
+that it is often tedious to step through a program. Students must
+witness many mundane instructions that are either irrelevant to the current
+task or are already well understood. These instructions clutter the proof and
+obscure key ideas. Our approach is to develop a scoped filter system that allows
+us to define patterns, instructing the stepper on which expressions to skip or pause
+during evaluation.
 
-For example, suppose the user want to debug through
-a program with evaluate the value of \(n!\), as in
-Figure~\ref{fig:intro-fac}. With a debug that comes with no filtering
-mechanism, they probably will have to step though the program in
-single steps all the time. (Figure~\ref{fig:intro-fac-unfiltered})
-However, if we applies a set of filters to instruct the debugger to
-``stop when you see the given pattern'', then the execution trace will
-be much smaller, and focused on steps that the user cares
-about. (Figure~\ref{fig:intro-fac-filtered})
+For example, suppose the user wants to debug
+a program to compute the value of \(n!\), as shown in
+Figure~\ref{fig:intro-fac}. Without a filtering mechanism,
+they would likely have to step through the program step-by-step continuously.
+(Figure~\ref{fig:intro-fac-unfiltered})
+However, by applying a set of filters instructing the debugger to
+``stop at specific patterns,'' the execution trace becomes more concise and
+focused on steps relevant to the user. (Figure~\ref{fig:intro-fac-filtered})
 
 \begin{figure}[h]
   \begin{center}
     \begin{subfigure}[t]{0.48\textwidth}
       \centering
       \includegraphics[width=\textwidth]{images/intro-fac-unfiltered.png}
-      \caption{Program trace with no filter.}
+      \caption{Program trace without filters.}
       \label{fig:intro-fac-unfiltered}
     \end{subfigure}
     \quad
     \begin{subfigure}[t]{0.48\textwidth}
       \centering
       \includegraphics[width=\textwidth]{images/intro-fac-filtered.png}
-      \caption{Program trace with filters that can stop at function application.}
+      \caption{Program trace with filters that stop at function application.}
       \label{fig:intro-fac-filtered}
     \end{subfigure}
   \end{center}
-  \caption{Program traces with filters/without filters.}
+  \caption{Program traces with and without filters.}
   \label{fig:intro-fac}
 \end{figure}
 
-% \TODO{want to be able to step programs with holes, including error holes:
+% \TODO{want to be able to step through programs with holes, including error holes:
 % abstract foldright vs foldleft}
 
-We have made the following contributes in the paper:
+We have made the following contributions in this paper:
 \begin{itemize}
-  \item We have developed the hazel stepper and a companion scoped filter system
-    that allows the user to specify sub-expressions whose full evaluation they
-    are not interested in, sub-expressions whose full evaluation they are
-    interested in, specific steps they are not interested in, and specific steps
-    they are interested in.
-  \item We have deployed the hazel stepper and the scoped filter system in
-    lecture and to students. We have conducted qualitative and quantitative
-    evaluation of the system.
-  \item We have formalized the filter semantics and proved the meta-theory
-    theorems of the hazel filter system so that we can be confident that the
-    filter system have desired properties.
+  \item We developed the Hazel stepper and a companion scoped filter system,
+    allowing users to specify sub-expressions they are uninterested in fully
+    evaluating, sub-expressions they are interested in, specific steps to skip, and
+    specific steps to observe.
+  \item We deployed the Hazel stepper and the scoped filter system in
+    lectures and with students, conducting both qualitative and quantitative
+    evaluations of the system.
+  \item We formalized the filter semantics and proved the meta-theoretical
+    properties of the Hazel filter system to ensure that the system behaves as intended.
 \end{itemize}
 
-In the following sections, we will first show some examples of the
-Hazel stepper, then we will discuss the details of the semantics of
-the calculus used by the stepper called \emph{filtered stepper
-  calculus}. After such a theoretic part, we will briefly discussion
-how the stepper is actually implemented. Finally, we will present our
-evaluation results of our stepper by observing its usage statistics in
-assignments.
+In the following sections, we will first show examples of the
+Hazel stepper. We will then discuss the details of the semantics of
+the calculus used by the stepper, called \emph{filtered stepper
+  calculus}. After this theoretical discussion, we will briefly explain
+how the stepper is implemented. Finally, we will present our
+evaluation results based on usage statistics from assignments.
 
 % - developed the hazel stepper and filter system, implemented it,
 % deployed it in lecture (qualitative evaluation), deployed it to
