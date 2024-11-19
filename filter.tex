@@ -53,28 +53,28 @@ indicating the priority of the residue.
 
 \subsection{Contextual Dynamics}
 
-The contextual dynamics of the filtered stepper calculus builds around
-the stepping judgment. This judgment establish the contextual behavior
-of the stepper.
+The contextual dynamics of the filtered stepper calculus revolve around the
+stepping judgment. This judgment establishes the contextual behavior of the
+stepper.
 
-There are two main operations in our semantics, one is to \emph{skip} the
-evaluation of an expression, the other is to \emph{pause} at a certain point of
-evaluation. These two operations leads to two main stepping judgment in our
-dynamic specifications. The \textsc{S-Step} rule specifies when do we want to
-stop at a step, while the \textsc{S-Skip} rule specifies when we want to skip over
-current step and proceed to next ones.
+There are two main operations in our semantics: one is to \emph{skip} the
+evaluation of an expression, and the other is to \emph{pause} at a certain point
+of evaluation. These two operations lead to two main stepping judgments in our
+dynamic specifications. The \textsc{S-Step} rule specifies when we want to stop
+at a step, while the \textsc{S-Skip} rule specifies when we want to skip over
+the current step and proceed to the next ones.
 
-There is an extra rule in the stepping judgment. The elimination step of filter
-should be always skipped. As pattern-matching against the filter statement is
-not possible within current pattern definition as in
-Figure.~\ref{fig:filter-syntax}, we treat them specially to make sure these
-steps are hidden and is not visible to users.
+There is an extra rule in the stepping judgment. The elimination step of a
+filter should always be skipped. As pattern-matching against the filter
+statement is not possible within the current pattern definition as in
+Figure~\ref{fig:filter-syntax}, we treat them specially to ensure these steps
+are hidden and not visible to users.
 
-We will first see two examples going through how should we or user
-interpreter these two rules, the gives the formal definitions of the
-judgment and all preceding judgment, including judgment for
-instrumentation, decomposition/re-composition, instruction-transition,
-and most importantly, stepping.
+We will first see two examples demonstrating how we or the user should interpret
+these two rules, then provide the formal definitions of the judgment and all
+preceding judgments, including judgments for instrumentation,
+decomposition/re-composition, instruction-transition, and most importantly,
+stepping.
 
 % \TODO{motivate the two rules}
 
@@ -93,7 +93,7 @@ therefore the expression \lstinline[language=hazel]{1 + 2 + 3 + 4} is
 first evaluated to \lstinline[language=hazel]{3 + 3 + 4} by first
 evaluate \lstinline[language=hazel]{1 + 2} to
 \lstinline[language=hazel]{3}, and then
-\lstinline[langauge=hazel]{6 + 4}, and finally
+\lstinline[language=hazel]{6 + 4}, and finally
 \lstinline[language=hazel]{10}
 
 This Hazel program will go through several steps as listed below, to
@@ -101,7 +101,7 @@ be evaluated against the order specified by the user.
 
 \begin{enumerate}
 \item \emph{Instrumentation}. \label{num:simple_example_instrument} At
-  this step, we transverse the expression recursively and collect all
+  this step, we traverse the expression recursively and collect all
   the filters along the path. Then for each sub-expression, we test if
   the sub-expression matches any of the collected filters. If it does,
   we insert a residue expression with the filter information around
@@ -204,7 +204,7 @@ debug stop(3 + 3 + 4) in
 \item \emph{Action Selection}. \label{num:simple_example_select}
   Select an action from the evaluation context. The action is chosen
   first by their priority, then by their distance to the mark
-  (\(\circ\)) in the evaluation context. In this case, we transverse
+  (\(\circ\)) in the evaluation context. In this case, we traverse
   the expression using (A-Add-L) and update the selected action
   accordingly. The action \(\ActSkip\) is selected, and the expression
   itself is kept the same.
