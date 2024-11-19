@@ -100,38 +100,28 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
 process of the program above.
 
 \begin{enumerate}
-\item \emph{Instrumentation}. \label{num:simple_example_instrument} At
-  this step, we traverse the expression recursively and collect all
-  the filters along the path. Then for each sub-expression, we test if
-  the sub-expression matches any of the collected filters. If it does,
-  we insert a residue expression with the filter information around
-  the matched sub-expression.
+\item \emph{Instrumentation}. \label{num:simple_example_instrument} In this
+  step, we traverse the expression recursively, collecting all filters along the
+  path. For each sub-expression, we check if it matches any of the collected
+  filters. If a match is found, we insert a residue expression with the filter
+  information around the matched sub-expression.
 
-  If we start with an empty set of filters, we might end up in a
-  situation where there is no sub-expression in the program that
-  matches any of the filters. In that situation, the stepper won't be
-  able to decide to skip over or stop at a step during evaluation.
-  Therefore, we set the default behavior to be stepping through the
-  evaluation of every expression.
+  If no sub-expression matches any filters, the stepper defaults to stepping
+  through every expression. 
 
-  In our example above, we apply 3 filters to the expression
-  \lstinline[language=hazel]{1 + 2 + 3 + 4}. One of them is the
-  default filter that gets prepend to every user program, and the
-  other two is written by the user.
-
+  In our example, we apply three filters to the expression
+  \lstinline[language=hazel]{1 + 2 + 3 + 4}:
   \begin{enumerate}
   \item \lstinline[language=hazel]{debug stop($e)}
   \item \lstinline[language=hazel]{debug eval(1 + 2 + 3 + 4)}
   \item \lstinline[language=hazel]{debug stop(3 + 3 + 4)}
   \end{enumerate}
 
-  During the instrumenting of the first filter, we find out that the
-  sub-expression \lstinline[language=hazel]{1 + 2 + 3 + 4} matches the
-  pattern \lstinline[language=hazel]{1 + 2 + 3 + 4}, so we instrument
-  the matched expression by wrapping it in a internal language
-  construct called residue expression
-  \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) around the sub-expression
-  (I-Add-Y). The instrumented expression is in Listing~\ref{lst:simple_example_instrument}.
+  During the instrumentation of the first filter, the sub-expression
+  \lstinline[language=hazel]{1 + 2 + 3 + 4} matches the pattern, so we wrap it
+  in a residue expression \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) (I-Add-Y).
+  The instrumented expression is shown in
+  Listing~\ref{lst:simple_example_instrument}.
 
   \begin{lstlisting}[language=hazel,caption={Program after instrumentation},label={lst:simple_example_instrument}]
 debug stop($e) in
@@ -145,11 +135,9 @@ debug stop(3 + 3 + 4) in
 \)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(\rangle^{\GasAll}
 \rangle^{\GasOne}\)@\end{lstlisting}
 
-  However, during the instrumenting of the second filter, there is no
-  sub-expression that matches the pattern
-  \lstinline[language=hazel]{3 + 3 + 4}, so no residue expression is
-  inserted around the sub-expression (I-Add-N). The instrumented
-  expression remains the same.
+  During the instrumentation of the second filter, no sub-expression matches the
+  pattern \lstinline[language=hazel]{3 + 3 + 4}, so no residue expression is
+  inserted (I-Add-N). The instrumented expression remains unchanged.
 
 \item \emph{Optimization}. The stepper might have insert too many
   residue expression in the instrumentation step, and this could
