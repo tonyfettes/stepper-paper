@@ -335,17 +335,35 @@
 
 \input{evaluation}
 
-\section{Related Work}
+% \section{Related Work}
 
-\TODO{other steppers}
+% \TODO{other steppers}
 
-\TODO{Andrew's previous group's one}
+% \TODO{Andrew's previous group's one}
 
-\TODO{algorithmic debugging}
+% \TODO{algorithmic debugging}
 
 \section{Discussion and Conclusion}
 
-\TODO{applications to agda unfolding?}
+In the evaluation section above, we found out that the stepper is
+frequently used by students to help them on their assignments,
+however, we don't find many valuable usage recording on the filter
+side of the stepper. We have drafted several reasons for this:
+
+\begin{enumerate}
+\item The Filtered Stepper Calculus has a rather complex user
+  interface, and is more intuitive for user to get hands on.
+\item Users have to modify their program to insert filter statements,
+  and this usually triggers re-evaluation of their program and can
+  takes a long time.
+\item The implementation of the filtered stepper is not efficient and
+  creates noticable delay when user switch to use a filtered stepper.
+\end{enumerate}
+
+Base on these hypothesis, we are planning to develop a more natural,
+intuitive, and dynamic user interface, so that programmers can freely
+add, change, remove filters during the evaluation without the need to
+restart over.
 
 %%
 %% The next two lines define the bibliography style to be used, and
