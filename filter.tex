@@ -13,6 +13,7 @@ properties like progression and preservation.
     \begin{array}{rcl}
       \DefAct a    &\Coloneqq& \ActSkip \mid \ActStep \\
       \DefGas g    &\Coloneqq& \GasOne \mid \GasAll \\
+      \DefLvl l    &\Coloneqq& \mathbb{N} \\
       \DefFilter f &\Coloneqq& (p, a, g) \\
       \DefExp e    &\Coloneqq& x \mid e(e) \mid \Lam{x}{e} \mid e + e \mid \Nat{n} \\
                    &\mid     & \Filter{f}{e} \\
@@ -87,17 +88,18 @@ debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 1 + 2 + 3 + 4\end{lstlisting}
 
-This program sums the numbers from 1 to 4. The plus operation in Hazel is binary
-and left-associative, so the expression
+This program sums the numbers from 1 to 4. The plus operation in Hazel
+is binary and left-associative, so the expression
 \lstinline[language=hazel]{1 + 2 + 3 + 4} is evaluated as follows:
 \lstinline[language=hazel]{1 + 2} becomes
-\lstinline[language=hazel]{3}, then \lstinline[language=hazel]{3 + 3} becomes
-\lstinline[language=hazel]{6}, and finally \lstinline[language=hazel]{6 + 4}
-becomes \lstinline[language=hazel]{10}.
+\lstinline[language=hazel]{3}, then \lstinline[language=hazel]{3 + 3}
+becomes \lstinline[language=hazel]{6}, and finally
+\lstinline[language=hazel]{6 + 4} becomes
+\lstinline[language=hazel]{10}.
 
 Each ``macroscopic'' step of the evaluation is achieved by a series of
-``microscopic'' steps. Here is a detailed description of the internal evaluation
-process of the program above.
+``microscopic'' steps. Here is a detailed description of first a few
+``microscopic'' steps of the program above.
 
 \begin{enumerate}
 \item \emph{Instrumentation}. \label{num:simple_example_instrument} In this
@@ -106,8 +108,38 @@ process of the program above.
   filters. If a match is found, we insert a residue expression with the filter
   information around the matched sub-expression.
 
-  If no sub-expression matches any filters, the stepper defaults to stepping
-  through every expression. 
+  The matching process itself is a recurisve process as well. If a
+  expression is constructed in the same way as the filter pattern, we recurse into
+  their sub-expressions to check if the sub-expressions match. If all
+  sub-expressions match, we say the expression matches the filter. In
+  most of the cases, we want the filter pattern to be able to match
+  against more kinds of expression. Therefore, we introduced two
+  wildcard matchers: \lstinline[language=hazel]{$e} and
+  \lstinline[language=hazel]{$v}. The former one matches against any
+  expression, while the latter one matches against any value. Assuming
+  we are checking if the expression \(e\) matches the filter
+  \(f\). This process can be informally concluded as the following
+  steps.
+
+  \begin{enumerate}
+  \item If \(f\) is wildcard \(\$e\), exits the process and returns
+    that \(e\) and \(\$e\) matches.
+  \item If \(f\) is wildcard \(\$v\), and \(e\) is a value, exits the process and returns
+    that \(e\) matches \(\$v\).
+  \item If \(f\) is wildcard \(\$v\), and \(e\) is not a value, exits
+    the process and returns that \(e\) does not match \(\$v\).
+  \item If the \(e\) and \(f\) does not share a common construction,
+    exits the matching process and returns \(e\) and \(f\) does not
+    match.
+  \item Otherwise, iterate over each pair of child expressions or
+    child filters in \(e\) and \(f\). Since \(e\) and \(f\) shares the
+    same construction, their number of child items are always the
+    same. For each pair, goes to step 1.
+  \item If every pairs in step 2 matches, exit the process and returns that \(e\) and \(f\) matches.
+  \end{enumerate}
+
+  If no sub-expression matches any of the collected filters, the
+  stepper defaults to stepping through every expression.
 
   In our example, we apply three filters to the expression
   \lstinline[language=hazel]{1 + 2 + 3 + 4}:
@@ -117,10 +149,26 @@ process of the program above.
   \item \lstinline[language=hazel]{debug stop(3 + 3 + 4)}
   \end{enumerate}
 
-  During the instrumentation of the first filter, the sub-expression
-  \lstinline[language=hazel]{1 + 2 + 3 + 4} matches the pattern, so we wrap it
-  in a residue expression \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) (I-Add-Y).
-  The instrumented expression is shown in
+  Before instrumentation, we will assign priorities to active
+  filters. The priority is assign in the way they are being added to
+  the list active filters. Here, we assign the priority 0 to the first
+  filter, 1 to the second one, and 2 to the last one. The priority
+  will be used when decising which action to take for the next step.
+
+  During the instrumentation of the first filter, any sub-expression
+  will match the pattern, so we wrap every sub-expression in a residue
+  expression \(\Residue{\ActStep}{\GasOne}{0}{\ldots}\). For the
+  inner-most sub-expressions, like \lstinline[language=hazel]{1},
+  \lstinline[language=hazel]{2}, etc., we do not instrument them since
+  they are value. Because a value cannot be evaluated, it would make
+  no sense if we allow the stepper to stop before ``evaluating'' an
+  value.
+
+  During the instrumentation of the second filter, the sub-expression
+  \lstinline[language=hazel]{1 + 2 + 3 + 4} matches the pattern, so we
+  wrap it in a residue expression
+  \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) (I-Add-Y).  The
+  instrumented expression is shown in
   Listing~\ref{lst:simple_example_instrument}.
 
   \begin{lstlisting}[language=hazel,caption={Program after instrumentation},label={lst:simple_example_instrument}]
@@ -135,7 +183,10 @@ debug stop(3 + 3 + 4) in
 \)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(\rangle^{\GasAll}
 \rangle^{\GasOne}\)@\end{lstlisting}
 
-  During the instrumentation of the second filter, no sub-expression matches the
+  One thing you might have noticed, is that we did not put instrumented
+  residue expression around 
+
+  During the instrumentation of the third filter, no sub-expression matches the
   pattern \lstinline[language=hazel]{3 + 3 + 4}, so no residue expression is
   inserted (I-Add-N). The instrumented expression remains unchanged.
 
@@ -189,16 +240,27 @@ debug stop(3 + 3 + 4) in
 \rangle^{\GasAll}
 \)@\end{lstlisting}
 
-\item \emph{Action Selection}. \label{num:simple_example_select}
-  Select an action from the evaluation context. The action is chosen
-  first by their priority, then by their distance to the mark
-  (\(\circ\)) in the evaluation context. In this case, we traverse
-  the expression using (A-Add-L) and update the selected action
-  accordingly. The action \(\ActSkip\) is selected, and the expression
+\item \emph{Making Decision}. \label{num:simple_example_select} Decide
+  which action (stop or continue) to take base on all the residue
+  expressions around mark in the evaluation context. The action is
+  decided using the following set of informal rules:
+
+  \begin{enumerate}
+  \item For a expression that is not a residue expression, the action
+    will be the one that comes from the sub-expression that contains
+    the mark.
+  \item For a residue expression, if the action comes from its only
+    sub-expression has a higher priority, use the action from the
+    sub-expression; otherwise, use the action of the residue
+    expression.
+  \end{enumerate}
+
+  In this case, the evaluation context yields an action of
+  \(\ActSkip\) in the decision making process, while the expression
   itself is kept the same.
 
 \item \emph{Residue removal (Decaying)}. Residue expressions that
-  has life-time of one is removed from the expression. This step is
+  has gas of one is removed from the expression. This step is
   done using the \(\Decay\) function. The expression after the removal
   of the residue expression is:
   \begin{lstlisting}[language=hazel,caption={Evaluation context after decaying},label={lst:simple_example_decay}]
@@ -207,7 +269,7 @@ debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(\prescript{\ActSkip}{1}{\langle}\circ\)@ + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
 
-\item \emph{User selection}. If the selected expression produced in
+\item \emph{User Interaction}. If the selected expression produced in
   the Step~\ref{num:simple_example_decompose} is of the form
   \lstinline[language=hazel]{debug .. in ..} or
   \(\Residue{a}{g}{l}{e}\), or the selected action from
