@@ -37,14 +37,30 @@ filter. The \texttt{Residue} expression is used internally by the stepper and is
 not visible to the user. It is used to signal the \emph{residue} of a effect of
 applying a filter to an expression.
 
-A filter is a tuple of a pattern, an action, and a gas. The pattern
-is a mutated of the term of untyped lambda calculus. Apart from constructs like
-variables, applications, and lambdas, it also includes some new constructs, a
-forall pattern \(\PatExpr\), a value pattern \(\PatValue\). The action is a tag indicating
-the action to be taken when the pattern matches an expression. It has two
-form, \(\ActSkip\) and \(\ActStep\). The gas is another tag indicating the
-live time of the effect of a filter. It has two form, \(\GasOne\) and
-\(\GasAll\).
+A filter is a tuple of a pattern, an action, and a gas. The pattern is
+a mutated of the term of untyped lambda calculus. Apart from
+constructs like variables, applications, and lambdas, it also includes
+some new constructs, a forall pattern \(\PatExpr\), a value pattern
+\(\PatValue\). The action is a tag indicating the action to be taken
+when the pattern matches an expression. It has two form, \(\ActSkip\)
+and \(\ActStep\). The gas is another tag indicating the live time of
+the effect of a filter. It has two form, \(\GasOne\) and
+\(\GasAll\). However, the tuple form of the filter expression is not
+intuitive for user to construct and typewrite in the Hazel
+editor. Therefore, we added some syntax sugar to help user better
+understand and write the filter expression, as shown in
+Table~\ref{tbl:filter-syntax-sugar}.
+
+\begin{table}[htpb]
+  \begin{tabular}{ll}
+    Hazel code with sugar & Actual syntax representation \\
+    \verb|debug stop(p) in e| & \(\Filter{(p, \ActStep, \GasOne)}{e}\) \\
+    \verb|debug step(p) in e| & \(\Filter{(p, \ActStep, \GasAll)}{e}\) \\
+    \verb|debug hide(p) in e| & \(\Filter{(p, \ActSkip, \GasOne)}{e}\) \\
+    \verb|debug eval(p) in e| & \(\Filter{(p, \ActSkip, \GasAll)}{e}\) \\
+  \end{tabular}
+  \caption{Mapping between the syntax sugar used in the Hazel editor and the actual syntax representation of filter expressions.}\label{tbl:filter-syntax-sugar}
+\end{table}
 
 The residue expression \(\Residue{a}{g}{l}{e}\) is a expression that is used to
 store the residue of the effect of a filter. It has four components, an action
