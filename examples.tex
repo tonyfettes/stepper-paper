@@ -8,21 +8,17 @@ that have been taken when evaluating this program.
 
 \begin{figure}
   \centering
-  \begin{minipage}{.40\linewidth}
-    \begin{subfigure}{\linewidth}
-      \includegraphics[scale=0.34]{images/eg11.png}
-      \caption{Hazel Code. This code, when run, will evaluate to the list [1,4,9].}
-      \label{fig:hazel-map}
-    \end{subfigure}
-  \end{minipage}
+  \begin{subfigure}{0.40\linewidth}
+    \frame{\includegraphics[scale=0.34]{images/eg11.png}}
+    \caption{Hazel Code. This code, when run, will evaluate to the list [1,4,9].}
+    \label{fig:hazel-map}
+  \end{subfigure}
   \hfill
-  \begin{minipage}{.57\linewidth}
-    \begin{subfigure}{\linewidth}
-      \includegraphics[scale=0.3]{images/eg12.png}
-      \caption{Stepper output in stepper mode. Strikethroughs indicate that a substitution has taken place.The code highlighted green at the bottom indicates where the next small-step transition can be taken.}
-      \label{fig:full-trace}
-    \end{subfigure}
-  \end{minipage}
+  \begin{subfigure}{0.57\linewidth}
+    \frame{\includegraphics[scale=0.37]{images/eg12.png}}
+    \caption{Stepper output in stepper mode. The code highlighted green at the bottom indicates where the next small-step transition can be taken.}
+    \label{fig:full-trace}
+  \end{subfigure}
   \caption{The stepper used on a list map example.}
 \end{figure}
 
@@ -30,28 +26,24 @@ In some circumstances, seeing the full length of the execution trace
 can be distracting. We may, for example, only want to focus on the
 recursive calls. The Hazel stepper provides some filter primitives
 that can specify steps to hide. In order to more clearly show the
-intuition behind the map function, we can hide all steps except for
-those which show the application of the map function, by inserting a
+intuition behind the map function, we can hide all steps except 
+those that show the application of the map function, by inserting a
 hide filter and a pause filter as shown in
 \autoref{fig:hide-pause-map}.
 
 \begin{figure}
   \centering
-  \begin{minipage}{.40\linewidth}
-    \begin{subfigure}{\linewidth}
-      \includegraphics[scale=0.34]{images/eg21.png}
-      \caption{The code from \autoref{fig:hazel-map} modified with extra hide and pause statements.}
-      \label{fig:hide-pause-map}
-    \end{subfigure}
-  \end{minipage}
+  \begin{subfigure}[T]{0.40\linewidth}
+    \frame{\includegraphics[scale=0.4]{images/eg21.png}}
+    \caption{The code from \autoref{fig:hazel-map} modified with extra hide and pause statements.}
+    \label{fig:hide-pause-map}
+  \end{subfigure}
   \hfill
-  \begin{minipage}{.57\linewidth}
-    \begin{subfigure}{\linewidth}
-      \includegraphics[scale=0.34]{images/eg22.png}
-      \caption{Stepper output showing only the recursive calls.}
-      \label{fig:full-trace}
-    \end{subfigure}
-  \end{minipage}
+  \begin{subfigure}[T]{0.50\linewidth}
+    \frame{\includegraphics[scale=0.4]{images/eg22.png}}
+    \caption{Stepper output showing only the recursive calls.}
+    \label{fig:recursive-trace}
+  \end{subfigure}
   \caption{A filtered stepper for showing recursive calls in the list map example.}
 \end{figure}
 
@@ -59,53 +51,49 @@ Each filter has a pattern that triggers the filter. The \verb|$e|
 pattern matches any expression, and the \verb|$v| pattern matches any
 fully-evaluated expression. \verb|map($v, $v)| is a pattern that
 matches any map expression applied to two fully-evaluated
-expressions. More details on the patterns are given in the judgement
-for pattern matching (\fbox{\(\Matches{p}{e}\)}).
+expressions. More details on the patterns are given in the 
+pattern matching judgment (\fbox{\(\Matches{p}{e}\)}).
 
-The \verb|hide| construct hides a step that matches the pattern, thus
-\verb|hide $e| hides all steps. The \verb|stop| construct shows a
-step that matches the pattern. Since it comes later, the
-\verb|debug stop(map($v, $v))| overrides the \verb|hide| expression to show
+The construct \verb|hide| hides a step that matches the pattern, and thus
+\verb|hide $e| hides all steps. The construct \verb|stop| shows a
+step that matches the pattern. Since it comes later, 
+\verb|debug stop(map($v, $v))| overrides the expression \verb|hide| to show
 any steps taken from an expression that contains a \verb|map| applied
 to two values.
 
-The \verb|hide| and \verb|pause| constructs each only hide or show one
+The \verb|hide| and \verb|pause| constructs each hide or show only one
 step. We also provide two more constructs, \verb|eval| and
-\verb|debug| that hide or show all evaluation steps for a
-subexpression that matches the given filter.
+\verb|debug| that hide or show all the evaluation steps for a
+sub-expression that matches the given filter.
 
 For example, in figure \autoref{fig:debug-map} we have added a debug
 filter that shows the full trace of each application of \verb|f|. We
-can see in \autoref{fig:debug-trace} that this leads to not only
-showing steps that apply \verb|f|, but also the multiplication that
-takes place to evaluate \verb|f(x)|.
+can see in \autoref{fig:debug-trace} that this not only
+shows steps that apply \verb|f|, but also multiplications that
+take place to evaluate \verb|f(x)|.
 
 \begin{figure}
   \centering
-  \begin{minipage}{.40\linewidth}
-    \begin{subfigure}{\linewidth}
-      \includegraphics[scale=0.57]{images/eg31.png}
-      \caption{The code from \autoref{fig:hazel-map} modified with extra hide, pause, and debug statements.}
-      \label{fig:debug-map}
-    \end{subfigure}
-  \end{minipage}
+  \begin{subfigure}{0.40\linewidth}
+    \frame{\includegraphics[scale=0.35]{images/eg31.png}}
+    \caption{The code from \autoref{fig:hazel-map} modified with extra hide, pause, and debug statements.}
+    \label{fig:debug-map}
+  \end{subfigure}
   \hfill
-  \begin{minipage}{.57\linewidth}
-    \begin{subfigure}{\linewidth}
-      \includegraphics[scale=0.57]{images/eg32.png}
-      \caption{Stepper output showing only the recursive calls and the steps taken to evaluate squares.}
-      \label{fig:debug-trace}
-    \end{subfigure}
-  \end{minipage}
+  \begin{subfigure}{0.57\linewidth}
+    \frame{\includegraphics[scale=0.28]{images/eg32.png}}
+    \caption{Stepper output showing only the recursive calls and the steps taken to evaluate squares.}
+    \label{fig:debug-trace}
+  \end{subfigure}
   \caption{A filtered stepper that demonstrates debug mode.}
 \end{figure}
 
-Note that this \verb|debug| statement overrides the \verb|pause| and
+\ldots Note that this \verb|debug| statement overrides the \verb|pause| and
 \verb|eval| statement because of the dynamic scoping of filters, which
-is achieved by instruct the expression every step and selected the
-closest filter to the part where the next step happens (See
+is achieved by instructing the expression every step and selecting the
+closest filter to the part where the next step occurs (See
 Step~\ref{num:simple_example_decompose} in
-Section~\ref{sec:filter_example} for more detailed description on
+Section~\ref{sec:filter_example} for a more detailed description of
 this).
 
 % \subsection{Matching}
