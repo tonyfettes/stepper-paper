@@ -4,7 +4,7 @@ through programs can help clarify the execution of a map function.
 A Hazel implementation of a map function over lists of integers is
 given in \autoref{fig:hazel-map}. The full execution trace is shown in
 \autoref{fig:full-trace}. It shows each of the small-step transitions
-that have been taken when evaluating this program.
+that are taken when evaluating this program.
 
 \begin{figure}
   \centering
@@ -25,9 +25,9 @@ that have been taken when evaluating this program.
 In some circumstances, seeing the full length of the execution trace
 can be distracting. We may, for example, only want to focus on the
 recursive calls. The Hazel stepper provides some filter primitives
-that can specify steps to hide. In order to more clearly show the
-intuition behind the map function, we can hide all steps except 
-those that show the application of the map function, by inserting a
+that specify steps to hide. To more clearly show the
+intuition behind the \verb|map| function, we can hide all steps except 
+those that show the application of the \verb|map| function, by inserting a
 hide filter and a pause filter as shown in
 \autoref{fig:hide-pause-map}.
 
@@ -63,10 +63,10 @@ to two values.
 
 The \verb|hide| and \verb|pause| constructs each hide or show only one
 step. We also provide two more constructs, \verb|eval| and
-\verb|debug| that hide or show all the evaluation steps for a
+\verb|debug|, that hide or show all the evaluation steps for a
 sub-expression that matches the given filter.
 
-For example, in figure \autoref{fig:debug-map} we have added a debug
+For example, in Figure~\autoref{fig:debug-map} we have added a debug
 filter that shows the full trace of each application of \verb|f|. We
 can see in \autoref{fig:debug-trace} that this not only
 shows steps that apply \verb|f|, but also multiplications that
@@ -88,10 +88,10 @@ take place to evaluate \verb|f(x)|.
   \caption{A filtered stepper that demonstrates debug mode.}
 \end{figure}
 
-\ldots Note that this \verb|debug| statement overrides the \verb|pause| and
-\verb|eval| statement because of the dynamic scoping of filters, which
-is achieved by instructing the expression every step and selecting the
-closest filter to the part where the next step occurs (See
+Note that this \verb|debug| statement overrides the \verb|pause| and
+\verb|eval| statements because of the dynamic scoping of filters, which
+is achieved by instrumenting the expression at every step and selecting the
+closest filter to the part where the next step occurs (see
 Step~\ref{num:simple_example_decompose} in
 Section~\ref{sec:filter_example} for a more detailed description of
 this).

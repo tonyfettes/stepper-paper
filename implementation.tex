@@ -2,34 +2,34 @@
 
 \subsection{Mini Stepper}
 
-A substitution based small-stepper evaluator of simply-typed lambda
-calculus with fix point. The evaluator is implemented in OCaml, and is
-used to test the the correctness of the behavior as specify as the
+We use a substitution-based small-step evaluator for the simply typed lambda
+calculus with a fixpoint. The evaluator is implemented in OCaml and is
+used to test the correctness of the behavior specified by the
 semantic rules in the paper.
 
 \subsection{Hazel Implementation}
 
-Hazel internally applies an big-step, environment-based dynamic
-semantics: it helps to avoid unnecessary substitutions, and can be
-generally optimized using tail-call optimization. However, since Hazel
-is being used as an instruction tool for a functional programming
-course, it would be helpful if it can simulate the substitution-based
+Hazel internally applies a big-step, environment-based dynamic
+semantics: it helps avoid unnecessary substitutions and can be
+optimized using tail-call optimization. However, since Hazel
+is used as an instructional tool for a functional programming
+course, it would be helpful if it could simulate substitution-based
 semantics when students are exploring this concept.
 
 To unify the internal implementation of the stepper, we keep one copy
-of the dynamic semantic rules, and having the big-step evaluator and
-small-step evaluator interpret the rules. To simulate the substitution
-behavior, we post-pocess the output of the stepper, so that all
-variable are displayed as it they are substituted, even though the
-evaluator/stepper haven't got to that part.
+of the dynamic semantics rules and have the big-step evaluator and
+small-step evaluator interpret the rules. To simulate substitution
+behavior, we post-process the output of the stepper, so that all
+variables are displayed as if they are substituted, even though the
+evaluator/stepper has not reached that part.
 
-Small-stepper with filter-calculus takes much more computational
-resources than the big-step evaluator. Therefore, we applied many
-techniques to improve the performance:
+The small-stepper with the filter calculus takes much more
+computational resources than the big-step evaluator. Therefore, we
+applied many techniques to improve performance:
 
 \begin{enumerate}
-\item During filter-match, we always perform a comparison for the
-  physical equality of two OCaml object.
+\item During filter matching, we always compare the physical
+  equality of two OCaml objects.
 \item We convert an expression to its locally nameless representation
   to compare the alpha-equivalence during matching.
 \item We applied some normalization rules to reduce the size of the

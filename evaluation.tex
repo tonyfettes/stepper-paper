@@ -1,8 +1,8 @@
 % !TEX root = ./main.tex
 
-To evaluate how our filtered calculus helps with teachers and students during
-the learning of functional programming language, we have integrated it into a
-course that works with functional programming languages at a university.
+To evaluate how our filtered calculus helps teachers and students learn
+functional programming, we integrated it into a university course on
+functional programming languages.
 
 \subsection{Lecture Integration}
 
@@ -10,16 +10,16 @@ course that works with functional programming languages at a university.
 
 \subsection{Assignment Integration}
 
-We have evaluated our stepper on several assignments. They usually consist of
-several tasks, each tasks ask students to implement or complete a function to
-pass given unit tests. To help students better focus on their task, we have
+We evaluated our stepper on several assignments. They usually consist of
+several tasks; each task asks students to implement or complete a function to
+pass given unit tests. To help students better focus on their task, we
 provided some prelude Hazel definitions that students can directly use in their
 assignments. We do not want the students to be able to inspect the evaluation of
-the prelude program, as this would break the imaginary narrative that all these
+the prelude program, as this would break the imaginary narrative that all this
 prelude content already exists in the environment. Therefore, we insert a
-\lstinline[language=hazel]{debug hide($e)} at the very top of the program, and a
+\lstinline[language=hazel]{debug hide($e)} at the very top of the program and a
 \lstinline[language=hazel]{debug stop($e)} before the user program. Whenever the
-user turn the stepper on, it will skip the execution of the prelude section and
+user turns the stepper on, it will skip the execution of the prelude section and
 stop at the entrance of the user program.
 
 \subsubsection{Qualitative Feedback}
@@ -28,8 +28,8 @@ stop at the entrance of the user program.
 
 \subsubsection{Quantitative Feedback}
 
-We have collected anonymous data from students during one of their
-assignments. The number of steps used by students is shown in the
+We collected anonymous data from students during one of their
+assignments. The number of steps used by students is shown in
 Figure~\ref{fig:eval-num-steps}.
 
 \begin{figure}[ht]
@@ -53,15 +53,15 @@ Figure~\ref{fig:eval-num-steps}.
   \label{fig:eval-num-steps}
 \end{figure}
 
-The first observation we made is, these students were never explicitly
+The first observation we made is that these students were never explicitly
 told anything about how to use the stepper, and they weren't told to
 use the stepper at any point in the homework, but almost half of them
 saw the teacher use it in lecture and decided they wanted to use it.
 
 However, as we can see, the number of steps used by students roughly
-conforms to a exponential distribution. This implies a small portion
-of students use the stepper extensively, while most of the students
-just briefly tried it or not using it at all.
+conforms to an exponential distribution. This implies that a small portion
+of students use the stepper extensively, while most students
+just briefly tried it or did not use it at all.
 
 %%% Local Variables:
 %%% mode: LaTeX

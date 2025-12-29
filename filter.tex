@@ -2,8 +2,8 @@
 
 In this section, we will discuss the semantics of the \emph{Filtered Stepper
 Calculus}. We first introduce the syntax of the language, then we discuss the
-the dynamics of the language. Finally, we will discuss the optional part of the
-semantic, the statics of the language, and show that the calculus satisfies
+dynamics of the language. Finally, we discuss the optional part of the
+semantics, the statics of the language, and show that the calculus satisfies
 properties like progression and preservation.
 
 \subsection{Syntax}
@@ -27,27 +27,26 @@ properties like progression and preservation.
   \label{fig:filter-syntax}
 \end{figure}
 
-The syntax of filter stepper calculus (Fig.~\ref{fig:filter-syntax}) is a
-extended version of untyped lambda calculus. Additionally, natural numbers and
-addition are added to it for some more concrete demonstration. It introduce two
-new expression to a untyped lambda calculus language, \texttt{Filter} and
-\texttt{Residue}. The \texttt{Filter} expression is visible at user level,
-indicating the expression surrounded by the expression is filtered by the
-filter. The \texttt{Residue} expression is used internally by the stepper and is
-not visible to the user. It is used to signal the \emph{residue} of a effect of
-applying a filter to an expression.
+The syntax of the filtered stepper calculus (Fig.~\ref{fig:filter-syntax}) is an
+extended version of the untyped lambda calculus. Additionally, natural numbers
+and addition are included for a more concrete demonstration. It introduces two
+new expressions to the untyped lambda calculus, \texttt{Filter} and
+\texttt{Residue}. The \texttt{Filter} expression is visible at the user level,
+indicating that the enclosed expression is filtered. The \texttt{Residue}
+expression is used internally by the stepper and is not visible to the user. It
+signals the \emph{residue} of an effect of applying a filter to an expression.
 
 A filter is a tuple of a pattern, an action, and a gas. The pattern is
-a mutated of the term of untyped lambda calculus. Apart from
+a variant of the term in the untyped lambda calculus. Apart from
 constructs like variables, applications, and lambdas, it also includes
-some new constructs, a forall pattern \(\PatExpr\), a value pattern
+some new constructs: a forall pattern \(\PatExpr\) and a value pattern
 \(\PatValue\). The action is a tag indicating the action to be taken
-when the pattern matches an expression. It has two form, \(\ActSkip\)
-and \(\ActStep\). The gas is another tag indicating the live time of
-the effect of a filter. It has two form, \(\GasOne\) and
+when the pattern matches an expression. It has two forms, \(\ActSkip\)
+and \(\ActStep\). The gas is another tag indicating the lifetime of
+the effect of a filter. It has two forms, \(\GasOne\) and
 \(\GasAll\). However, the tuple form of the filter expression is not
-intuitive for user to construct and typewrite in the Hazel
-editor. Therefore, we added some syntax sugar to help user better
+intuitive for users to construct or type in the Hazel
+editor. Therefore, we added syntactic sugar to help users better
 understand and write the filter expression, as shown in
 Table~\ref{tbl:filter-syntax-sugar}.
 
@@ -59,12 +58,12 @@ Table~\ref{tbl:filter-syntax-sugar}.
     \verb|debug hide(p) in e| & \(\Filter{(p, \ActSkip, \GasOne)}{e}\) \\
     \verb|debug eval(p) in e| & \(\Filter{(p, \ActSkip, \GasAll)}{e}\) \\
   \end{tabular}
-  \caption{Mapping between the syntax sugar used in the Hazel editor and the actual syntax representation of filter expressions.}\label{tbl:filter-syntax-sugar}
+  \caption{Mapping between the syntactic sugar used in the Hazel editor and the actual syntax representation of filter expressions.}\label{tbl:filter-syntax-sugar}
 \end{table}
 
-The residue expression \(\Residue{a}{g}{l}{e}\) is a expression that is used to
-store the residue of the effect of a filter. It has four components, an action
-\(a\), a gas \(g\), a priority \(l\), and a expression \(e\). The action and the
+The residue expression \(\Residue{a}{g}{l}{e}\) is an expression that is used to
+store the residue of the effect of a filter. It has four components: an action
+\(a\), a gas \(g\), a priority \(l\), and an expression \(e\). The action and the
 gas are the same as the ones in a filter. The priority is a natural number
 indicating the priority of the residue.
 
@@ -83,7 +82,7 @@ the current step and proceed to the next ones.
 
 There is an extra rule in the stepping judgment. The elimination step of a
 filter should always be skipped. As pattern-matching against the filter
-statement is not possible within the current pattern definition as in
+statement is not possible within the current pattern definition in
 Figure~\ref{fig:filter-syntax}, we treat them specially to ensure these steps
 are hidden and not visible to users.
 
@@ -114,7 +113,7 @@ becomes \lstinline[language=hazel]{6}, and finally
 \lstinline[language=hazel]{10}.
 
 Each ``macroscopic'' step of the evaluation is achieved by a series of
-``microscopic'' steps. Here is a detailed description of first a few
+``microscopic'' steps. Here is a detailed description of the first few
 ``microscopic'' steps of the program above.
 
 \begin{enumerate}
@@ -124,11 +123,11 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   filters. If a match is found, we insert a residue expression with the filter
   information around the matched sub-expression.
 
-  The matching process itself is a recurisve process as well. If a
+  The matching process itself is recursive. If an
   expression is constructed in the same way as the filter pattern, we recurse into
   their sub-expressions to check if the sub-expressions match. If all
   sub-expressions match, we say the expression matches the filter. In
-  most of the cases, we want the filter pattern to be able to match
+  most cases, we want the filter pattern to match
   against more kinds of expression. Therefore, we introduced two
   wildcard matchers: \lstinline[language=hazel]{$e} and
   \lstinline[language=hazel]{$v}. The former one matches against any
@@ -138,20 +137,20 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   steps.
 
   \begin{enumerate}
-  \item If \(f\) is wildcard \(\$e\), exits the process and returns
-    that \(e\) and \(\$e\) matches.
-  \item If \(f\) is wildcard \(\$v\), and \(e\) is a value, exits the process and returns
+  \item If \(f\) is wildcard \(\$e\), exit the process and return
+    that \(e\) and \(\$e\) match.
+  \item If \(f\) is wildcard \(\$v\), and \(e\) is a value, exit the process and return
     that \(e\) matches \(\$v\).
-  \item If \(f\) is wildcard \(\$v\), and \(e\) is not a value, exits
-    the process and returns that \(e\) does not match \(\$v\).
-  \item If the \(e\) and \(f\) does not share a common construction,
-    exits the matching process and returns \(e\) and \(f\) does not
+  \item If \(f\) is wildcard \(\$v\), and \(e\) is not a value, exit
+    the process and return that \(e\) does not match \(\$v\).
+  \item If \(e\) and \(f\) do not share a common construction,
+    exit the matching process and return that \(e\) and \(f\) do not
     match.
   \item Otherwise, iterate over each pair of child expressions or
-    child filters in \(e\) and \(f\). Since \(e\) and \(f\) shares the
-    same construction, their number of child items are always the
-    same. For each pair, goes to step 1.
-  \item If every pairs in step 2 matches, exit the process and returns that \(e\) and \(f\) matches.
+    child filters in \(e\) and \(f\). Since \(e\) and \(f\) share the
+    same construction, their number of child items is always the
+    same. For each pair, go to step 1.
+  \item If every pair in step 2 matches, exit the process and return that \(e\) and \(f\) match.
   \end{enumerate}
 
   If no sub-expression matches any of the collected filters, the
@@ -165,18 +164,18 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   \item \lstinline[language=hazel]{debug stop(3 + 3 + 4)}
   \end{enumerate}
 
-  Before instrumentation, we will assign priorities to active
-  filters. The priority is assign in the way they are being added to
-  the list active filters. Here, we assign the priority 0 to the first
+  Before instrumentation, we assign priorities to active
+  filters. The priority is assigned based on the order in which filters are added to
+  the list of active filters. Here, we assign priority 0 to the first
   filter, 1 to the second one, and 2 to the last one. The priority
-  will be used when decising which action to take for the next step.
+  is used when deciding which action to take for the next step.
 
   During the instrumentation of the first filter, any sub-expression
   will match the pattern, so we wrap every sub-expression in a residue
   expression \(\Residue{\ActStep}{\GasOne}{0}{\ldots}\). For the
-  inner-most sub-expressions, like \lstinline[language=hazel]{1},
+  innermost sub-expressions, like \lstinline[language=hazel]{1},
   \lstinline[language=hazel]{2}, etc., we do not instrument them since
-  they are value. Because a value cannot be evaluated, it would make
+  they are values. Because a value cannot be evaluated, it would make
   no sense if we allow the stepper to stop before ``evaluating'' an
   value.
 
@@ -199,23 +198,23 @@ debug stop(3 + 3 + 4) in
 \)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(\rangle^{\GasAll}
 \rangle^{\GasOne}\)@\end{lstlisting}
 
-  One thing you might have noticed, is that we did not put instrumented
-  residue expression around 
+  One thing you might have noticed is that we did not put instrumented
+  residue expressions around values.
 
   During the instrumentation of the third filter, no sub-expression matches the
   pattern \lstinline[language=hazel]{3 + 3 + 4}, so no residue expression is
   inserted (I-Add-N). The instrumented expression remains unchanged.
 
-\item \emph{Optimization}. The stepper might have insert too many
-  residue expression in the instrumentation step, and this could
+\item \emph{Optimization}. The stepper might have inserted too many
+  residue expressions in the instrumentation step, and this could
   probably cause a significant slowdown of the stepper. Therefore,
   some redundant residue expressions are optimized out during this
   step.
 
   Generally, we want to remove all immediately adjacent residue
-  expressions by picking the one with higest priority, because this is
+  expressions by picking the one with highest priority, because this is
   the only one that can be picked among these residue expressions
-  during the action selection process. Here, the most outward two
+  during the action selection process. Here, the two outermost
   residue expressions are adjacent:
   \(\Residue{\ActStep}{\GasOne}{0}{\Residue{\ActSkip}{\GasAll}{1}{\ldots}}\),
   we remove the ones with lower priorities (O-Residue-Inner) to get
@@ -238,11 +237,11 @@ debug stop(3 + 3 + 4) in
 
 \item \emph{Decomposition}. \label{num:simple_example_decompose} The
   expression is then decomposed into an evaluation context and a
-  selected expression. The instrumented expression from last step can
+  selected expression. The instrumented expression from the last step can
   be decomposed by recursively decomposing addition (D-Add-L) and
-  residue expression (D-Residue), into an evaluation context
+  residue expressions (D-Residue) into an evaluation context
   (Listing~\ref{lst:simple_example_decompose}) and a selected
-  expression \lstinline{1 + 2}
+  expression \lstinline{1 + 2}.
 
   \begin{lstlisting}[language=hazel,caption={Decomposed evaluation context},label={lst:simple_example_decompose}]
 debug stop($e) in
@@ -257,26 +256,26 @@ debug stop(3 + 3 + 4) in
 \)@\end{lstlisting}
 
 \item \emph{Making Decision}. \label{num:simple_example_select} Decide
-  which action (stop or continue) to take base on all the residue
-  expressions around mark in the evaluation context. The action is
+  which action (stop or continue) to take based on all the residue
+  expressions around the mark in the evaluation context. The action is
   decided using the following set of informal rules:
 
   \begin{enumerate}
-  \item For a expression that is not a residue expression, the action
+  \item For an expression that is not a residue expression, the action
     will be the one that comes from the sub-expression that contains
     the mark.
-  \item For a residue expression, if the action comes from its only
+  \item For a residue expression, if the action from its only
     sub-expression has a higher priority, use the action from the
     sub-expression; otherwise, use the action of the residue
     expression.
   \end{enumerate}
 
   In this case, the evaluation context yields an action of
-  \(\ActSkip\) in the decision making process, while the expression
+  \(\ActSkip\) in the decision-making process, while the expression
   itself is kept the same.
 
 \item \emph{Residue removal (Decaying)}. Residue expressions that
-  has gas of one is removed from the expression. This step is
+  have gas of one are removed from the expression. This step is
   done using the \(\Decay\) function. The expression after the removal
   of the residue expression is:
   \begin{lstlisting}[language=hazel,caption={Evaluation context after decaying},label={lst:simple_example_decay}]
@@ -286,28 +285,28 @@ debug stop(3 + 3 + 4) in
 @\(\prescript{\ActSkip}{1}{\langle}\circ\)@ + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
 
 \item \emph{User Interaction}. If the selected expression produced in
-  the Step~\ref{num:simple_example_decompose} is of the form
+  Step~\ref{num:simple_example_decompose} is of the form
   \lstinline[language=hazel]{debug .. in ..} or
   \(\Residue{a}{g}{l}{e}\), or the selected action from
   Step~\ref{num:simple_example_select} is \(\ActSkip\), the stepper
-  will skip over this step and goes into the next step. (S-Filter and
+  will skip over this step and go into the next step. (S-Filter and
   S-Skip). Otherwise, the stepper will yield the control to the user,
-  and let them to choose which next possible step to take. (S-Step)
+  and let them choose which next possible step to take. (S-Step)
 
   In this case, the selected action is \(\ActSkip\). Therefore, the stepper
-  will skipping over this step and goes into the next step.
+  will skip over this step and go into the next step.
 
 \item \emph{Instruction Transition}. The selected expression is
-  instruction-transitioned to a new expression. In this case, selected
+  instruction-transitioned to a new expression. In this case, the selected
   expression \lstinline[language=hazel]{1 + 2} is
   instruction-transitioned to \lstinline[language=hazel]{3} according
   to the transition rule (T-Add).
 
 \item \emph{Composition}: When the selected-expression is
   instruction-transitioned to a new expression, we need to compose the
-  transitioned selected expression with evaluation context to get the
-  updated expression. The rules for composition is the same as the
-  rules for decomposition, but instead, we start from rule (D-Add-L)
+  transitioned selected expression with the evaluation context to get the
+  updated expression. The rules for composition are the same as the
+  rules for decomposition, but instead, we start with rule (D-Add-L)
   to build up the recomposed expression in a bottom-up way. The
   recomposed expression is:
   \begin{lstlisting}[language=hazel]
@@ -316,13 +315,13 @@ debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(\prescript{\ActSkip}{1}{\langle}\)@3 + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
 
-\item \emph{Recursion}. As long as we don't get a value, we will keep
-  stepping through the expression, i.e. goes back to
+\item \emph{Recursion}. As long as we do not get a value, we will keep
+  stepping through the expression, i.e. go back to
   Step~\ref{num:simple_example_instrument}.
 \end{enumerate}
 
 In the following round of the procedure, the program is first
-instrumented (Listing~\ref{lst:simple_example_1_instrument}), then get
+instrumented (Listing~\ref{lst:simple_example_1_instrument}), then is
 decomposed into an evaluation context
 (Listing~\ref{lst:simple_example_1_decompose}) with a selected
 expression \lstinline[language=hazel]{3 + 3}.
@@ -370,9 +369,9 @@ debug stop(3 + 3 + 4) in
 \)@\end{lstlisting}
 
 Then, we computed the selected action to be \(\ActStep\). Therefore,
-the stepper stops at this step and let user to choose which
-sub-expression should be evaluated for the next step, by clicking the
-yellow area as shown in the Figure~\ref{fig:simple_example_final_ui}
+the stepper stops at this step and lets the user choose which
+sub-expression should be evaluated for the next step by clicking the
+yellow area shown in Figure~\ref{fig:simple_example_final_ui}.
 
 \begin{figure}[h]
   \centering
@@ -466,7 +465,7 @@ yellow area as shown in the Figure~\ref{fig:simple_example_final_ui}
 % \item \emph{}
 % \end{enumerate}
 
-The motivating examples above has demonstrate briefly how the filter
+The motivating examples above have demonstrated briefly how the filter
 calculus evaluates, which is modeled by the following rules for the
 dynamic semantics of the filter calculus.
 
@@ -498,7 +497,7 @@ dynamic semantics of the filter calculus.
   }
 \end{mathpar}
 
-\fbox{\(\JustStep{e}{e'}{n}\)} Expression \(e\) takes \(n\) steps to \(e'\), completely ignore the behavior of the filters and residues.
+\fbox{\(\JustStep{e}{e'}{n}\)} Expression \(e\) takes \(n\) steps to \(e'\), completely ignoring the behavior of the filters and residues.
 \begin{mathpar}
   \inferrule[J-Step]{
     \Decompose{e}{\mathcal{E}_0}{e_0} \\
@@ -1003,17 +1002,17 @@ dynamic semantics of the filter calculus.
 %   Behavior of matched expression is specified by the user at least once, or can be traced by to a filter statement or the default.
 % \end{conjecture}
 
-We want the (Typed) Filtered Stepper Calculus to conform to some most
-basic properties of its base calculus (Typed) Lambda Calculus.
+We want the (Typed) Filtered Stepper Calculus to conform to the most
+basic properties of its base calculus, the (Typed) Lambda Calculus.
 Theorem~\ref{thm:preservation} states that for every well-typed
 expression, every step during the evaluation of the expression will
-yield a same type. Theorem~\ref{thm:progress} says that we won't get
+yield the same type. Theorem~\ref{thm:progress} says that we won't get
 stuck during the evaluation. Theorem~\ref{thm:simulation} shows that
 the behavior of the Filtered Stepper Calculus can be simulated
-asynchronously by Untyped Lambda Calculus.
+asynchronously by the Untyped Lambda Calculus.
 
 \begin{theorem}[Preservation]\label{thm:preservation}
-  If a expression has type \(\tau\), then after stepping, the stepped expression also has a type \(\tau\).
+  If an expression has type \(\tau\), then after stepping, the stepped expression also has type \(\tau\).
   \[
     \forall e, \tau, n, \Gamma, \qquad
     \TypeEntails{\Gamma}{e}{\tau} \land \Step{e}{e'}{n} \implies \TypeEntails{\Gamma}{e'}{\tau}
@@ -1021,7 +1020,7 @@ asynchronously by Untyped Lambda Calculus.
 \end{theorem}
 
 \begin{theorem}[Progress]\label{thm:progress}
-  If an expression is well typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
+  If an expression is well-typed, then there exists an \(n\) such that the expression can be stepped for \(n\) steps.
   \[
     \forall e, \tau, \qquad
     \TypeEntails{\varnothing}{e}{\tau} \implies \exists e' . \Step{e}{e'}{1}
@@ -1029,7 +1028,7 @@ asynchronously by Untyped Lambda Calculus.
 \end{theorem}
 
 \begin{theorem}[Simulation]\label{thm:simulation}
-  If an expression \(e\) take \(n\) steps to become \(e'\), then the stripped down version of \(e\), which is \(\Strip{e}\), will takes \(m\) steps to become \(\Strip{e'}\) for some \(m\).
+  If an expression \(e\) takes \(n\) steps to become \(e'\), then the stripped-down version of \(e\), which is \(\Strip{e}\), will take \(m\) steps to become \(\Strip{e'}\) for some \(m\).
   \[
     \forall e, n, e', \qquad
     \Step{e}{e'}{n} \implies \exists m, \JustStep{\Strip{e}}{\Strip{e'}}{m}
@@ -1038,9 +1037,9 @@ asynchronously by Untyped Lambda Calculus.
 
 \subsection{Statics}
 
-Optionally, we want to give the filtered stepper calculus so that it can have some reasonable behavior with regard to free variables. The most notable benefit we can obtained from a typing system is that we can enforce that there is no free variable in the pattern and the expression before we test if they match.
+Optionally, we want to give the filtered stepper calculus a static semantics so that it can have reasonable behavior with regard to free variables. The most notable benefit we can obtain from a typing system is that we can enforce that there are no free variables in the pattern and the expression before we test whether they match.
 
-We can extend the definition of filtered stepper calculus to include type.
+We can extend the definition of the filtered stepper calculus to include types.
 \begin{figure}[h]
   \begin{equation*}
     \begin{array}{rcl}
@@ -1049,7 +1048,7 @@ We can extend the definition of filtered stepper calculus to include type.
                    &\mid     & \Arrow{\tau}{\tau}
     \end{array}
   \end{equation*}
-  \caption{Syntax of Typed Filtered Stepper Calculus. Only definitions of types are listed, refer to Figure~\ref{fig:filter-syntax} for omitted definitions.}
+  \caption{Syntax of Typed Filtered Stepper Calculus. Only definitions of types are listed; refer to Figure~\ref{fig:filter-syntax} for omitted definitions.}
   \label{fig:typed-filter-syntax}
 \end{figure}
 
