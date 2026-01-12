@@ -335,13 +335,47 @@
 
 \input{evaluation}
 
-% \section{Related Work}
+\section{Related Work}
 
-% \TODO{other steppers}
+Early debuggers already explored flexible breakpoints and monitoring
+conditions (e.g., EXDAMS)~\cite{balzer1969exdams}, and later work
+formalized more expressive breakpoint specifications such as
+occurrence-based breaks~\cite{bertot1991occurrences} and focusing
+debuggers~\cite{bernstein1995focusing}. In parallel, algorithmic
+(declarative) debugging~\cite{shapiro1983algorithmic} and program
+slicing~\cite{weiser1984slicing} emphasized tree-structured views of
+computation and the idea of isolating relevant subcomputations. These
+efforts motivate our emphasis on structural, pattern-driven control of
+evaluation: instead of stopping at a line or function entry, Hazel lets
+users describe the \emph{shape} of the expression where they want the
+stepper to pause or skip.
 
-% \TODO{Andrew's previous group's one}
+Stepping debuggers for functional languages have long served pedagogy. The
+DrScheme/Racket algebraic stepper presents small-step reductions that mirror
+operational semantics, with formal correctness arguments for its
+traces~\cite{clements2001stepper}. More pragmatic functional debuggers such as
+GHCi focus on breakpoints and execution tracing, with special challenges in
+lazy settings and alternative strategies such as optimistic
+evaluation~\cite{marlow2007ghci,ennals2003optimistic}. These tools make
+evaluation visible but typically offer only coarse step filters or conditional
+breaks; the user cannot succinctly express which \emph{kinds} of redexes
+should appear in a trace.
 
-% \TODO{algorithmic debugging}
+Trace-based and declarative debuggers for lazy languages (Hat, Freja, Buddha,
+and related systems based on evaluation dependence trees) provide rich
+post-hoc queries over execution trees~\cite{chitil2002hat,nilsson1998freja,
+pope2006buddha,nilsson1997edt}, and observation-based tools like Hood let users
+mark expressions of interest~\cite{gill2000hood}. Our approach is
+complementary: we support interactive, on-the-fly focusing by embedding a
+pattern language into the program, so the stepper can elide irrelevant
+regions rather than record them and query later.
+
+Finally, Hazel’s broader context matters. Hazelnut-style structural editing
+and semantics for incomplete programs make the AST explicit at all times,
+which naturally supports tree-pattern matching and stepping in the presence
+of holes~\cite{omar2017hazelnut,voysey2018running}. The filter calculus builds
+on this substrate to give a precise semantics for scoped, pattern-based
+stepping control in a live functional environment.
 
 \section{Discussion and Conclusion}
 
