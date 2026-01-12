@@ -10,12 +10,14 @@ that are taken when evaluating this program.
   \centering
   \begin{subfigure}{0.40\linewidth}
     \frame{\includegraphics[scale=0.34]{images/eg11.png}}
+    \Description{Hazel code defining a list map function, a square function, and a call to map over [1, 2, 3].}
     \caption{Hazel Code. This code, when run, will evaluate to the list [1,4,9].}
     \label{fig:hazel-map}
   \end{subfigure}
   \hfill
   \begin{subfigure}{0.57\linewidth}
     \frame{\includegraphics[scale=0.37]{images/eg12.png}}
+    \Description{Full stepper trace for the map example, with highlighted next-step location and substitution annotations.}
     \caption{Stepper output in stepper mode. The code highlighted green at the bottom indicates where the next small-step transition can be taken.}
     \label{fig:full-trace}
   \end{subfigure}
@@ -35,12 +37,14 @@ hide filter and a pause filter as shown in
   \centering
   \begin{subfigure}[T]{0.40\linewidth}
     \frame{\includegraphics[scale=0.4]{images/eg21.png}}
+    \Description{Map example annotated with debug eval and debug stop filters to focus on recursive calls.}
     \caption{The code from \autoref{fig:hazel-map} modified with extra hide and pause statements.}
     \label{fig:hide-pause-map}
   \end{subfigure}
   \hfill
   \begin{subfigure}[T]{0.50\linewidth}
     \frame{\includegraphics[scale=0.4]{images/eg22.png}}
+    \Description{Filtered stepper output showing only recursive map calls and the resulting list [1, 4, 9].}
     \caption{Stepper output showing only the recursive calls.}
     \label{fig:recursive-trace}
   \end{subfigure}
@@ -76,12 +80,14 @@ take place to evaluate \verb|f(x)|.
   \centering
   \begin{subfigure}{0.40\linewidth}
     \frame{\includegraphics[scale=0.35]{images/eg31.png}}
+    \Description{Map example with eval and step filters, including debug mode for square.}
     \caption{The code from \autoref{fig:hazel-map} modified with extra hide, pause, and debug statements.}
     \label{fig:debug-map}
   \end{subfigure}
   \hfill
   \begin{subfigure}{0.57\linewidth}
     \frame{\includegraphics[scale=0.28]{images/eg32.png}}
+    \Description{Filtered trace showing recursive map steps and explicit square evaluations on list elements.}
     \caption{Stepper output showing only the recursive calls and the steps taken to evaluate squares.}
     \label{fig:debug-trace}
   \end{subfigure}
