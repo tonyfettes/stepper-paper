@@ -92,8 +92,6 @@ preceding judgments, including judgments for instrumentation,
 decomposition/re-composition, instruction-transition, and most importantly,
 stepping.
 
-% \TODO{motivate the two rules}
-
 \subsubsection{Examples and Motivations}\label{sec:filter_example}
 
 Consider the following Hazel program:
@@ -380,92 +378,6 @@ yellow area shown in Figure~\ref{fig:simple_example_final_ui}.
   \caption{User Interface for the \emph{User Selection} Step.}\label{fig:simple_example_final_ui}
 \end{figure}
 
-% Let's take a look at another motivating example. Suppose a first-year
-% student in college is learn the concept of recursion by writing a
-% simple recursive function to calculate the n-th term of the Fibonacci
-% sequence. They would probably write a Hazel program like the one in Listing~\ref{lst:filter_example_fib_program}
-
-% \begin{lstlisting}[
-%   language=hazel,
-%   caption={A Hazel program that calculates the n-th term of the Fibonacci sequence},
-%   label={lst:filter_example_fib_program}
-% ]
-% debug eval($e) in
-% let fib = fun n ->
-%   if n == 1 then
-%     1
-%   else
-%     fib(n - 1) + fib(n - 2)
-% in
-% debug stop(fib($v)) in
-% fib(3)
-% \end{lstlisting}
-
-% The stepper will go through a similar process to determine how to
-% evaluate the program and when to stop and yield the control to the
-% user through the user interface. To reduce the verbosity, we only
-% state 
-
-% \begin{enumerate}
-% \item \emph{Instrumentation, Decomposition, and Residue Removal}. The program can be decomposed into an
-%   evaluation context (Listing~\ref{lst:filter_example_fib_decompose}) and a selected expression \lstinline[language=hazel]{fib(3)}.
-% \begin{lstlisting}[
-%   language=hazel,
-%   caption={Decomposed evaluation context of the program},
-%   label={lst:filter_example_fib_decompose}
-% ]
-% debug eval($e) in
-% @\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
-%      if n == 1 then
-%        1
-%      else
-%        fib(n - 1) + fib(n - 2)
-%    in
-%    debug stop(fib($v)) in
-%    @\(
-% \prescript{\ActSkip}{0}{\langle}
-% \prescript{\ActStep}{1}{\langle}
-% \circ
-% \rangle^{\GasOne}
-% \rangle^{\GasAll}
-% \rangle^{\GasAll}
-% \)@\end{lstlisting}
-% \item \emph{Action selection and User selection}. Since the stepper
-%   selected the action \(\ActStep\), it will stop here and yield its
-%   control to user.
-% \item \emph{Instruction Transition, Composition, and Decomposition in
-%     the next round}. The decomposition in Round 2 yields an evaluation
-%   context as in Listing~\ref{lst:filter_example_fib_decompose} and a selected expression
-%   \lstinline[language=hazel]{3 == 1}
-% \begin{lstlisting}[
-%   language=hazel,
-%   caption={Decomposed evaluation context of the program},
-%   label={lst:filter_example_fib_decompose}
-% ]
-% debug eval($e) in
-% @\(\prescript{\ActSkip}{0}{\langle}\)@let fib = fun n ->
-%      if n == 1 then
-%        1
-%      else
-%        fib(n - 1) + fib(n - 2)
-%    in
-%    debug stop(fib($v)) in
-%    @\(
-% \prescript{\ActSkip}{0}{\langle}
-% \prescript{\ActStep}{1}{\langle}
-% \)@if @\(\circ\)@ then
-%             1
-%           else
-%             fib(3 - 1) + fib(3 - 2)@\(
-% \rangle^{\GasOne}
-% \rangle^{\GasAll}
-% \rangle^{\GasAll}
-% \)@\end{lstlisting}
-% \item \emph{Action Selections and User Interaction}. The selected
-%   action is \(\ActSkip\). This step is skipped. 
-% \item \emph{}
-% \end{enumerate}
-
 The motivating examples above have demonstrated briefly how the filter
 calculus evaluates, which is modeled by the following rules for the
 dynamic semantics of the filter calculus.
@@ -574,14 +486,6 @@ dynamic semantics of the filter calculus.
   } \\
 \end{mathpar}
 
-% \mck{I think there's some preservation of priority property to prove here, since the numbers are re-generated on every pass.}
-
-% \hxf{I would formalize the preservation property like this: the priority of residue/do statements \emph{produced} by the same filter have the same priorities}
-
-% \mck{This instrumentation will regenerate the do statements on every pass - I guess it doesn't cause problems but it would be nice if it didn't?}
-
-% \hxf{Yeah it would be much nicer to avoid the duplication of do statements. We can to some ad-hoc fusing of do-statements same effect \& priorties, probably utilmately we want the instrumentation to be Idempotent.}
-
 \fbox{\(\Decay{\mathcal{E}} = \mathcal{E}'\)} Evaluation Context \(\mathcal{E}\) decays to context \(\mathcal{E}'\).
 \[
   \begin{aligned}
@@ -595,8 +499,6 @@ dynamic semantics of the filter calculus.
     \Decay{\Residue{a}{\GasAll}{l}{e}} &= \Residue{a}{\GasAll}{l}{\Decay{e}}
   \end{aligned}
 \]
-
-% \TODO{Correct the function to use correct evaluation context}
 
 \fbox{\(\Analyze{(a, l)}{\mathcal{E}}{a'}\)} Under the filter environment of \((a, l)\), the context \(\mathcal{E}\) is transitioned to \(\mathcal{E}'\) and the action \(a'\) is returned.
 \begin{mathpar}
@@ -967,42 +869,6 @@ dynamic semantics of the filter calculus.
 
 \subsection{Properties}
 
-% \TODO{Properties}
-% \\\\
-% Conjecture: Idempotence of Instrumentation (Instrumenting twice should have the same effect as instrumenting once)
-
-% $\InstructPAGL{p}{a}{g}{l}{e}{e'} \Rightarrow \InstructPAGL{p}{a}{g}{l}{e'}{e''} \Rightarrow e' = e''$
-
-% \mck{This conjecture is actually not true, because instrumentation always adds more do statements, even if they're already there.}
-% \\\\
-% Conjecture : Determinism of steps
-
-% $\RuleStep{e}{e'} \Rightarrow \RuleStep{e}{e''} \Rightarrow e' = e''$
-
-% \mck{I think this holds in this calculus, but not in Hazel itself.}
-% \\\\
-% Conjecture(Unchanging Priorities)
-
-% \(\)
-
-% \hxf{I believe the Unchanging Priorities does holds. I would phrase it as: the residue statements inserted by the same filter statement has the same priorities (or their priorites keeps in order), even across decays and steppings.}
-
-% Conjecture(Correctness)
-
-% \begin{conjecture}[Unchanging Priorities]
-%   The priorities of filter should keep the same across instrumentation, decaying and stepping.
-% \end{conjecture}
-
-% \mck{Since priorities are always re-numbered, we want some sort of conjecture that they remain the same. We could even possibly use this to avoid duplication of `do's?}
-
-% \begin{conjecture}[Necessacity of Priorities]
-%   It always pick the filter that is closer to the target expression.
-% \end{conjecture}
-
-% \begin{conjecture}[Scoped Filter]
-%   Behavior of matched expression is specified by the user at least once, or can be traced by to a filter statement or the default.
-% \end{conjecture}
-
 We want the (Typed) Filtered Stepper Calculus to conform to the most
 basic properties of its base calculus, the (Typed) Lambda Calculus.
 Theorem~\ref{thm:preservation} states that for every well-typed
@@ -1148,15 +1014,14 @@ We can extend the definition of the filtered stepper calculus to include types.
 
 We mechanize both the dynamic and static semantics of the stepper
 calculus in Agda, as well as the proofs of the preservation, progress,
-and simulation properties we have proposed in previous sections. We
-introduces de-Bruijn indices in our Agda mechanization, as a way to
-implement \(\alpha\)-equivalence during the filter-matching
-process. To mitigate the complexity of de-Bruijn indices, we fused
-the operation of substitution and function application into one
-function, so that many structurally possible invalid state (for
-example, shift-down a variable with index 0) are
-eliminated. Additionally, we used well-founded recursion to proof the
-terminating of the instrumentation and optimization process.
+and simulation properties stated above. We use de Bruijn indices to
+implement \(\alpha\)-equivalence during the filter-matching process.
+To mitigate the complexity of de Bruijn indices, we fuse the
+operations of substitution and function application into a single
+function, eliminating many structurally possible but invalid states
+(for example, shifting down a variable with index 0). Additionally,
+we use well-founded recursion to prove termination of the
+instrumentation and optimization passes.
 
 %%% Local Variables:
 %%% mode: LaTeX

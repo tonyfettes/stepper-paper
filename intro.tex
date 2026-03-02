@@ -1,79 +1,56 @@
-The debugger has been one of the most important tools that students and programmers
-use to understand the behavior of their programs. Well-established debuggers such as
-GDB, LLDB, and Visual Studio Debugger are widely used in industry and
-academia. These debuggers provide a rich set of tools for users to inspect and even
-modify various aspects of a running program, such as memory, variables,
-and call stacks. However, they also suffer from several limitations.
+Substitution-based equational reasoning is a cornerstone of functional
+programming education: students learn to evaluate programs by
+repeatedly rewriting redexes, producing a trace of steps that serves
+as a proof of the final result. Hazel~\cite{omar2017hazelnut} is a
+live functional programming environment used in an upper-level
+programming languages course, where we teach exactly this style of
+reasoning. A natural pedagogical tool in this setting is an
+\emph{algebraic stepper}---a debugger that presents each small-step
+reduction as a justified equational step, mirroring what students see
+in lectures and assignments.
 
-\begin{enumerate}
-  \item They are tailored for imperative languages like C or C++ and are not
-    well-suited for functional languages, where memory is usually managed by
-    garbage collection and is not directly manipulated by the programmer.
-  \item Many of them support stepping in and stepping over instructions. However,
-    these options can be tedious to use when the program is large and
-    complex, as the user has to step through many instructions that are irrelevant
-    to the current task.
-  \item They are not well-suited for teaching. They are designed for professional
-    programmers who are already familiar with the language and the program they
-    are debugging. They are not ideal for beginners learning the
-    language and the program.
-\end{enumerate}
+However, even moderately sized programs produce long traces. Computing
+\(3!\) already requires over a dozen small steps when every
+arithmetic operation and substitution is shown, and realistic
+classroom examples---recursive list traversals, higher-order
+functions, pattern matching---generate traces that are far longer.
+Most of these steps are mundane: they perform arithmetic that the
+student already understands, or substitute values into bindings that
+are not relevant to the concept being taught. The sheer volume
+obscures the key ideas the instructor wants to highlight and makes the
+stepper tedious to use in lectures and homework alike.
 
-We recognize that some key capabilities in traditional debuggers
-significantly aid programmers, and we believe it would also be useful to incorporate
-these features in a debugger for functional programming languages.
-\begin{enumerate}
-  \item Evaluation can be paused at specific points and resumed later. Users
-    should be able to specify when and where evaluation should be paused, typically
-    implemented through breakpoints in traditional debuggers.
-  \item Paused evaluations can be stepped through. Traditionally, debuggers provide
-    users with three options: ``step through,'' ``step over,'' and ``step out.''
-\end{enumerate}
+Existing tools offer limited help with this problem. Traditional
+debuggers such as GDB and LLDB operate at the instruction or line
+level, making them a poor fit for expression-oriented functional
+languages. The Racket algebraic stepper~\cite{clements2001stepper}
+faithfully presents small-step reductions but provides no mechanism
+for the user to select which \emph{kinds} of steps appear in the
+trace. Conditional breakpoints, as found in most debuggers, allow
+stopping at particular locations or when a variable satisfies a
+predicate, but they cannot express structural conditions such as
+``pause whenever a recursive call to \texttt{map} is about to be
+applied to fully evaluated arguments.''
 
-Furthermore, we want to introduce additional capabilities tailored specifically to functional
-programming languages and classroom settings, especially in the context of Hazel, to make it a
-valuable tool for teaching and learning functional programming.
-\begin{enumerate}
-  \item It can skip the stepping process for certain \emph{kinds} of expressions.
-  \item It controls program evaluation at the expression level rather than at
-    the line or instruction level.
-  \item Hazel’s evaluation order is unspecified, so expressions that are not values
-    may have multiple evaluation paths. We believe it is helpful to model this property
-    in the debugger.
-\end{enumerate}
+We address this gap with a \emph{scoped filter system} that gives
+users pattern-based control over which reduction steps are shown or
+hidden. Users write lightweight filter annotations---embedded directly
+in the program text---that specify patterns over expressions. A filter
+can \emph{hide} all steps matching a pattern, \emph{show} (pause at) steps
+matching a pattern, or apply these effects to the entire evaluation of
+a matched sub-expression rather than a single step. Because filters
+are lexically scoped and dynamically applied, they compose naturally:
+an inner filter can override an outer one, and a filter attached to a
+function body travels with the closure, taking effect wherever the
+function is called.
 
-% To serve as a good tool for understanding program behavior, the stepper
-% filter should be consistent with the semantics of the language. Hazel
-% uses an environment-based big-step evaluator to evaluate programs,
-% which is consistent with a substitution-based evaluator. Therefore,
-% the stepper filter should not exhibit different behavior when built on
-% an environment-based or a substitution-based evaluator.
-
-We aim to develop a new kind of debugger tailored for
-functional languages and suitable for teaching in Hazel. Hazel is a pure
-functional language that supports working with incomplete programs and is used
-in an upper-level programming languages course, where we teach
-substitution-based equational semantics. We want the steps to be presented as
-justified proof steps, mirroring what we cover in lectures and assignments.
-
-% \TODO{(example here of a simple equational stepping proof)}
-
-One of the main challenges in using such a debugger in lectures is
-that it is often tedious to step through a program. Students must
-witness many mundane instructions that are either irrelevant to the current
-task or are already well understood. These instructions clutter the proof and
-obscure key ideas. Our approach is to develop a scoped filter system that allows
-us to define patterns, instructing the stepper on which expressions to skip or pause
-during evaluation.
-
-For example, suppose the user wants to debug
-a program to compute the value of \(n!\), as shown in
-Figure~\ref{fig:intro-fac}. Without a filtering mechanism,
-they would likely have to step through the program continuously,
-step by step (Figure~\ref{fig:intro-fac-unfiltered}).
-However, by applying a set of filters instructing the debugger to
-``stop at specific patterns,'' the execution trace becomes more concise and
-focused on steps relevant to the user. (Figure~\ref{fig:intro-fac-filtered})
+For example, consider a program that computes \(n!\)
+(Figure~\ref{fig:intro-fac}). Without filters, the stepper displays
+every reduction step, including routine arithmetic and substitutions
+(Figure~\ref{fig:intro-fac-unfiltered}). By adding a filter that
+hides all steps except those involving a function application, the
+trace collapses to just the key recursive calls and the final result
+(Figure~\ref{fig:intro-fac-filtered}).
 
 \begin{figure}[h]
   \begin{center}
@@ -93,37 +70,38 @@ focused on steps relevant to the user. (Figure~\ref{fig:intro-fac-filtered})
       \label{fig:intro-fac-filtered}
     \end{subfigure}
   \end{center}
-  \caption{Program traces with and without filters.}
+  \caption{Stepper traces for a factorial program. Filters reduce a long
+    sequence of small steps to just the relevant reductions.}
   \label{fig:intro-fac}
 \end{figure}
 
-% \TODO{want to be able to step through programs with holes, including error holes:
-% abstract foldright vs foldleft}
-
-We have made the following contributions in this paper:
+We make the following contributions:
 \begin{itemize}
-  \item We developed the Hazel stepper and a companion scoped filter system,
-    allowing users to specify sub-expressions they are uninterested in fully
-    evaluating, sub-expressions they are interested in, specific steps to skip, and
-    specific steps to observe.
-  \item We deployed the Hazel stepper and the scoped filter system in
-    lectures and with students, conducting both qualitative and quantitative
-    evaluations of the system.
-  \item We formalized the filter semantics and proved the meta-theoretical
-    properties of the Hazel filter system to ensure that the system behaves as intended.
+  \item We present the \emph{Filtered Stepper Calculus}, a formal
+    semantics for scoped, pattern-based stepping control over
+    expression evaluation. The calculus extends a standard small-step
+    semantics with filter and residue expressions that govern which
+    steps are shown to the user. We prove preservation, progress, and a
+    simulation theorem (the filtered stepper agrees with the underlying
+    unfiltered semantics), and mechanize all proofs in Agda.
+  \item We implement the filtered stepper in Hazel. The implementation
+    reconciles Hazel's internal environment-based big-step evaluator
+    with the substitution-based presentation expected by students,
+    and includes several optimizations to keep interactive stepping
+    responsive.
+  \item We deploy the stepper in a university programming languages
+    course and report both qualitative observations from lecture use
+    and quantitative usage data from student assignments.
 \end{itemize}
 
-In the following sections, we will first show examples of the
-Hazel stepper. We will then discuss the details of the semantics of
-the calculus used by the stepper, called \emph{filtered stepper
-  calculus}. After this theoretical discussion, we will briefly explain
-how the stepper is implemented. Finally, we will present our
-evaluation results based on usage statistics from assignments.
-
-% - developed the hazel stepper and filter system, implemented it,
-% deployed it in lecture (qualitative evaluation), deployed it to
-% students (qualitative + quantitative evaluation), formalized the
-% filter semantics, metatheory
+The remainder of the paper is organized as follows.
+Section~2 introduces the Hazel stepper by example, demonstrating the
+four filter primitives and their interactions.
+Section~3 presents the Filtered Stepper Calculus and its
+metatheory.
+Section~4 describes the implementation.
+Section~5 reports on our evaluation.
+Section~6 discusses related work, and Section~7 concludes.
 
 %%% Local Variables:
 %%% mode: LaTeX

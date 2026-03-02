@@ -1,52 +1,101 @@
 % !TEX root = ./main.tex
 
-\subsection{Mini Stepper}
+We describe two implementations of the Filtered Stepper Calculus: a
+compact reference implementation in OCaml that directly mirrors the
+formal rules, and the full integration into the Hazel live programming
+environment.
 
-We use a substitution-based small-step evaluator for the simply typed lambda
-calculus with a fixpoint. The evaluator is implemented in OCaml and is
-used to test the correctness of the behavior specified by the
-semantic rules in the paper.
+\subsection{Reference Implementation}\label{sec:impl-mini}
 
-\subsection{Hazel Implementation}
+To validate the formal semantics presented in Section~\ref{sec:filter},
+we built a standalone reference stepper in OCaml. It implements a
+substitution-based small-step evaluator for the simply typed lambda
+calculus extended with a fixpoint operator and the full filter calculus.
+The core is roughly 560 lines of OCaml, structured as a direct
+transliteration of the formal judgments: expressions, patterns, actions,
+and gas are mutually recursive algebraic data types; filter and residue
+expressions are constructors of the expression type.
 
-Hazel internally applies a big-step, environment-based dynamic
-semantics: it helps avoid unnecessary substitutions and can be
-optimized using tail-call optimization. However, since Hazel
-is used as an instructional tool for a functional programming
-course, it would be helpful if it could simulate substitution-based
-semantics when students are exploring this concept.
+A single stepping function orchestrates the pipeline described in
+Section~\ref{sec:filter_example}, calling instrumentation, optimization,
+decomposition, annotation, and decay in sequence. If the annotation for
+the selected redex is \(\ActSkip\), the stepper performs the instruction
+transition and recurses; if it is \(\ActStep\), it returns the list of
+available redexes to the caller.
 
-To unify the internal implementation of the stepper, we keep one copy
-of the dynamic semantics rules and have the big-step evaluator and
-small-step evaluator interpret the rules. To simulate substitution
-behavior, we post-process the output of the stepper, so that all
-variables are displayed as if they are substituted, even though the
-evaluator/stepper has not reached that part.
+Because the reference implementation uses substitution-based evaluation
+and named variables, it corresponds closely to the on-paper calculus and
+is easy to audit against the formal rules. We test the stepper against
+known results (e.g., verifying that \texttt{fac(5)} evaluates to 120)
+and use it as a test oracle for the Hazel integration: any divergence
+between the two indicates a bug in the production stepper.
 
-The small-stepper with the filter calculus takes much more
-computational resources than the big-step evaluator. Therefore, we
-applied many techniques to improve performance:
+\subsection{Hazel Integration}\label{sec:impl-hazel}
 
-\begin{enumerate}
-\item During filter matching, we always compare the physical
-  equality of two OCaml objects.
-\item We convert an expression to its locally nameless representation
-  to compare the alpha-equivalence during matching.
-\item We applied some normalization rules to reduce the size of the
-  intermediate expression.
-\end{enumerate}
+Hazel internally uses a big-step, environment-based evaluator for
+performance: it avoids redundant substitutions and enables tail-call
+optimization. However, because the course teaches substitution-based
+equational semantics, the stepper must present traces as if
+substitution were performed eagerly.
 
-% talk about how the big step + small step evaluator abstractions
+We achieve this by maintaining a single set of semantic transition
+rules that both the big-step evaluator and the small-step stepper
+interpret. The stepper works over Hazel's internal expression
+representation, which includes closures (pairs of an expression and
+an environment). During decomposition, closures are traversed like
+ordinary expressions, with the environment carried in the evaluation
+context. When the stepper displays a step to the user, a
+post-processing pass replaces all bound variables with their
+environment bindings, producing output that looks substitution-based.
 
-% environment-based evaluator + post-processing when showing in
-% substitution mode
+The filter system in Hazel mirrors the reference implementation but
+operates over Hazel's richer expression language, which includes
+pattern matching, sum and product types, type ascriptions, and typed
+holes. Filter matching uses a semantic equality check with special
+accommodations: fixpoint wrappers and type ascriptions are ignored
+during comparison, and empty holes in a pattern act as the
+\(\PatValue\) wildcard.
 
-% Optimisation for of the stepper filter: how we remove redundant
-% filters (while insure the correctness of the implementation?)
+\subsection{Performance}\label{sec:impl-perf}
 
-% Equivalency of function:
-% \TODO{compare closure & structural equivalence of the body expression}
-% Finally we will move to UUID.
+In Hazel, the filter-instrumented stepper is more expensive than the
+plain big-step evaluator, because every step requires a full
+instrumentation pass over the expression tree followed by
+decomposition. We applied several techniques to keep interactive
+stepping responsive in the Hazel editor.
+
+\paragraph{Optimization of residue nodes.}
+After instrumentation, immediately adjacent residue nodes are common
+(e.g., when an outer \(\PatExpr\) filter and a more specific inner
+filter both match the same sub-expression). An optimization pass
+collapses nested residues by retaining only the highest-priority one,
+reducing the depth of the expression tree before decomposition.
+
+\paragraph{Physical equality.}
+During filter matching, we first check physical equality between the
+pattern and the expression before falling back to structural
+comparison. Since instrumentation is applied repeatedly across steps,
+many sub-expressions are shared and this check short-circuits a large
+fraction of comparisons.
+
+\paragraph{Locally nameless representation.}
+To test alpha-equivalence of lambda bodies during matching (the
+M-Lam and M-Fix rules), we convert expressions to a locally nameless
+(de Bruijn) representation. This avoids the cost of repeated
+alpha-renaming and provides a canonical form for comparison.
+
+\paragraph{Settings-based pre-filtering.}
+In addition to the user-written filter language, Hazel provides UI
+toggles that control the visibility of common step kinds: variable
+lookups, fixpoint unrolling, type ascription elimination, and case
+clause selection. When a step kind is toggled off, the stepper skips
+it before filter matching is attempted, avoiding unnecessary work.
+
+\paragraph{Web worker isolation.}
+The stepper runs in a dedicated Web Worker thread, so that
+long-running step computations do not block the editor's main thread.
+The worker communicates with the UI via message passing, and the user
+can cancel a stepping computation at any time.
 
 %%% Local Variables:
 %%% mode: LaTeX
