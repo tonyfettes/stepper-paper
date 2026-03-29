@@ -103,12 +103,12 @@ debug stop(3 + 3 + 4) in
 
 This program sums the numbers from 1 to 4. The plus operation in Hazel
 is binary and left-associative, so the expression
-\lstinline[language=hazel]{1 + 2 + 3 + 4} is evaluated as follows:
-\lstinline[language=hazel]{1 + 2} becomes
-\lstinline[language=hazel]{3}, then \lstinline[language=hazel]{3 + 3}
-becomes \lstinline[language=hazel]{6}, and finally
-\lstinline[language=hazel]{6 + 4} becomes
-\lstinline[language=hazel]{10}.
+\code{1 + 2 + 3 + 4} is evaluated as follows:
+\code{1 + 2} becomes
+\code{3}, then \code{3 + 3}
+becomes \code{6}, and finally
+\code{6 + 4} becomes
+\code{10}.
 
 Each ``macroscopic'' step of the evaluation is achieved by a series of
 ``microscopic'' steps. Here is a detailed description of the first few
@@ -127,8 +127,8 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   sub-expressions match, we say the expression matches the filter. In
   most cases, we want the filter pattern to match
   against more kinds of expression. Therefore, we introduced two
-  wildcard matchers: \lstinline[language=hazel]{\$e} and
-  \lstinline[language=hazel]{\$v}. The former matches against any
+  wildcard matchers: \code{\$e} and
+  \code{\$v}. The former matches against any
   expression, while the latter matches against any value. Assume
   we are checking whether expression \(e\) matches filter
   \(f\). This process can be informally described as the following
@@ -155,11 +155,11 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   stepper defaults to stepping through every expression.
 
   In our example, we apply three filters to the expression
-  \lstinline[language=hazel]{1 + 2 + 3 + 4}:
+  \code{1 + 2 + 3 + 4}:
   \begin{enumerate}
-  \item \lstinline[language=hazel]{debug stop(\$e)}
-  \item \lstinline[language=hazel]{debug eval(1 + 2 + 3 + 4)}
-  \item \lstinline[language=hazel]{debug stop(3 + 3 + 4)}
+  \item \code{debug stop(\$e)}
+  \item \code{debug eval(1 + 2 + 3 + 4)}
+  \item \code{debug stop(3 + 3 + 4)}
   \end{enumerate}
 
   Before instrumentation, we assign priorities to active
@@ -171,14 +171,14 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   During the instrumentation of the first filter, any sub-expression
   will match the pattern, so we wrap every sub-expression in a residue
   expression \(\Residue{\ActStep}{\GasOne}{0}{\ldots}\). For the
-  innermost sub-expressions, like \lstinline[language=hazel]{1},
-  \lstinline[language=hazel]{2}, etc., we do not instrument them since
+  innermost sub-expressions, like \code{1},
+  \code{2}, etc., we do not instrument them since
   they are values. Because a value cannot be evaluated, it would make
   no sense if we allow the stepper to stop before ``evaluating'' a
   value.
 
   During the instrumentation of the second filter, the sub-expression
-  \lstinline[language=hazel]{1 + 2 + 3 + 4} matches the pattern, so we
+  \code{1 + 2 + 3 + 4} matches the pattern, so we
   wrap it in a residue expression
   \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) (I-Add-Y).  The
   instrumented expression is shown in
@@ -200,7 +200,7 @@ debug stop(3 + 3 + 4) in
   residue expressions around values.
 
   During the instrumentation of the third filter, no sub-expression matches the
-  pattern \lstinline[language=hazel]{3 + 3 + 4}, so no residue expression is
+  pattern \code{3 + 3 + 4}, so no residue expression is
   inserted (I-Add-N). The instrumented expression remains unchanged.
 
 \item \emph{Optimization}. The stepper might have inserted too many
@@ -239,7 +239,7 @@ debug stop(3 + 3 + 4) in
   be decomposed by recursively decomposing addition (D-Add-L) and
   residue expressions (D-Residue) into an evaluation context
   (Listing~\ref{lst:simple_example_decompose}) and a selected
-  expression \lstinline{1 + 2}.
+  expression \code{1 + 2}.
 
   \begin{lstlisting}[language=hazel,caption={Decomposed evaluation context},label={lst:simple_example_decompose}]
 debug stop(\$e) in
@@ -284,7 +284,7 @@ debug stop(3 + 3 + 4) in
 
 \item \emph{User Interaction}. If the selected expression produced in
   Step~\ref{num:simple_example_decompose} is of the form
-  \lstinline[language=hazel]{debug .. in ..} or
+  \code{debug .. in ..} or
   \(\Residue{a}{g}{l}{e}\), or the selected action from
   Step~\ref{num:simple_example_select} is \(\ActSkip\), the stepper
   will skip over this step and go into the next step. (S-Filter and
@@ -296,8 +296,8 @@ debug stop(3 + 3 + 4) in
 
 \item \emph{Instruction Transition}. The selected expression is
   instruction-transitioned to a new expression. In this case, the selected
-  expression \lstinline[language=hazel]{1 + 2} is
-  instruction-transitioned to \lstinline[language=hazel]{3} according
+  expression \code{1 + 2} is
+  instruction-transitioned to \code{3} according
   to the transition rule (T-Add).
 
 \item \emph{Composition}. When the selected expression is
@@ -322,7 +322,7 @@ In the following round of the procedure, the program is first
 instrumented (Listing~\ref{lst:simple_example_1_instrument}), then is
 decomposed into an evaluation context
 (Listing~\ref{lst:simple_example_1_decompose}) with a selected
-expression \lstinline[language=hazel]{3 + 3}.
+expression \code{3 + 3}.
 
 \begin{lstlisting}[
   language=hazel,

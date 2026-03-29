@@ -10,6 +10,9 @@
 \newcommand{\cyr}[1]{\ifdraft{\color{green}[#1 --Cyrus]}\fi}
 
 
+%%% Inline code with background highlight
+\definecolor{codebg}{gray}{0.92}
+
 %%% Hazel language highlight
 
 \lstdefinelanguage{hazel}{
@@ -25,6 +28,13 @@
   keywordstyle=\bfseries\color{black},
   commentstyle=\color{gray},
 }
+
+\lstset{
+  language=hazel,
+}
+
+%%% Inline code command with background
+\newcommand{\code}[1]{{\fboxsep=1.5pt\colorbox{codebg}{\texttt{\small #1}}}}
 
 %%% Stepper/Filter Semantics
 

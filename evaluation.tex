@@ -17,8 +17,8 @@ provided some prelude Hazel definitions that students can directly use in their
 assignments. We do not want the students to be able to inspect the evaluation of
 the prelude program, as this would break the imaginary narrative that all this
 prelude content already exists in the environment. Therefore, we insert a
-\lstinline[language=hazel]{debug hide($e)} at the very top of the program and a
-\lstinline[language=hazel]{debug stop($e)} before the user program. Whenever the
+\code{debug hide(\$e)} at the very top of the program and a
+\code{debug stop(\$e)} before the user program. Whenever the
 user turns the stepper on, it will skip the execution of the prelude section and
 stop at the entrance of the user program.
 
