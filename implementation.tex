@@ -91,12 +91,6 @@ lookups, fixpoint unrolling, type ascription elimination, and case
 clause selection. When a step kind is toggled off, the stepper skips
 it before filter matching is attempted, avoiding unnecessary work.
 
-\paragraph{Web worker isolation.}
-The stepper runs in a dedicated Web Worker thread, so that
-long-running step computations do not block the editor's main thread.
-The worker communicates with the UI via message passing, and the user
-can cancel a stepping computation at any time.
-
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "main"
