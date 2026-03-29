@@ -18,7 +18,7 @@ that are taken when evaluating this program.
   \begin{subfigure}{0.57\linewidth}
     \frame{\includegraphics[scale=0.37]{images/eg12.png}}
     \Description{Full stepper trace for the map example, with highlighted next-step location and substitution annotations.}
-    \caption{Stepper output in stepper mode. The code highlighted green at the bottom indicates where the next small-step transition can be taken.}
+    \caption{Stepper output in stepper mode. The code highlighted in green at the bottom indicates where the next small-step transition can be taken.}
     \label{fig:full-trace}
   \end{subfigure}
   \caption{The stepper used on a list map example.}
@@ -30,16 +30,16 @@ recursive calls. The Hazel stepper provides some filter primitives
 that specify steps to hide. To more clearly show the
 intuition behind the \verb|map| function, we can hide all steps except 
 those that show the application of the \verb|map| function, by inserting a
-hide filter and a pause filter as shown in
-\autoref{fig:hide-pause-map}.
+\verb|debug hide| filter and a \verb|debug stop| filter as shown in
+\autoref{fig:hide-stop-map}.
 
 \begin{figure}
   \centering
   \begin{subfigure}[T]{0.40\linewidth}
     \frame{\includegraphics[scale=0.4]{images/eg21.png}}
     \Description{Map example annotated with debug eval and debug stop filters to focus on recursive calls.}
-    \caption{The code from \autoref{fig:hazel-map} modified with extra hide and pause statements.}
-    \label{fig:hide-pause-map}
+    \caption{The code from \autoref{fig:hazel-map} modified with extra \texttt{debug hide} and \texttt{debug stop} statements.}
+    \label{fig:hide-stop-map}
   \end{subfigure}
   \hfill
   \begin{subfigure}[T]{0.50\linewidth}
@@ -58,19 +58,19 @@ matches any map expression applied to two fully-evaluated
 expressions. More details on the patterns are given in the 
 pattern matching judgment (\fbox{\(\Matches{p}{e}\)}).
 
-The construct \verb|hide| hides a step that matches the pattern, and thus
-\verb|hide $e| hides all steps. The construct \verb|stop| shows a
-step that matches the pattern. Since it comes later, 
-\verb|debug stop(map($v, $v))| overrides the expression \verb|hide| to show
+The construct \verb|debug hide| hides a step that matches the pattern, and thus
+\verb|debug hide($e)| hides all steps. The construct \verb|debug stop| shows a
+step that matches the pattern. Since it appears later in the program,
+\verb|debug stop(map($v, $v))| overrides the preceding \verb|debug hide| to show
 any steps taken from an expression that contains a \verb|map| applied
 to two values.
 
-The \verb|hide| and \verb|pause| constructs each hide or show only one
-step. We also provide two more constructs, \verb|eval| and
-\verb|debug|, that hide or show all the evaluation steps for a
-sub-expression that matches the given filter.
+The \verb|debug hide| and \verb|debug stop| constructs respectively hide or show only one
+step. We also provide two more constructs, \verb|debug eval| and
+\verb|debug step|, that hide or show all the evaluation steps for a
+sub-expression that matches the given pattern.
 
-For example, in \autoref{fig:debug-map} we have added a debug
+For example, in \autoref{fig:debug-map} we have added a \verb|debug step|
 filter that shows the full trace of each application of \verb|f|. We
 can see in \autoref{fig:debug-trace} that this not only
 shows steps that apply \verb|f|, but also multiplications that
@@ -81,7 +81,7 @@ take place to evaluate \verb|f(x)|.
   \begin{subfigure}{0.40\linewidth}
     \frame{\includegraphics[scale=0.35]{images/eg31.png}}
     \Description{Map example with eval and step filters, including debug mode for square.}
-    \caption{The code from \autoref{fig:hazel-map} modified with extra hide, pause, and debug statements.}
+    \caption{The code from \autoref{fig:hazel-map} modified with extra \texttt{debug hide}, \texttt{debug stop}, and \texttt{debug step} statements.}
     \label{fig:debug-map}
   \end{subfigure}
   \hfill
@@ -94,8 +94,8 @@ take place to evaluate \verb|f(x)|.
   \caption{A filtered stepper that demonstrates debug mode.}
 \end{figure}
 
-Note that this \verb|debug| statement overrides the \verb|pause| and
-\verb|eval| statements because of the dynamic scoping of filters, which
+Note that this \verb|debug step| statement overrides the \verb|debug hide| and
+\verb|debug stop| statements because of the dynamic scoping of filters, which
 is achieved by instrumenting the expression at every step and selecting the
 closest filter to the part where the next step occurs (see
 Step~\ref{num:simple_example_decompose} in
