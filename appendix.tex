@@ -84,8 +84,8 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   expression \(\Residue{\ActStep}{\GasOne}{0}{\ldots}\). For the
   innermost sub-expressions, like \code{1},
   \code{2}, etc., we do not instrument them since
-  they are values. Because a value cannot be evaluated, it would make
-  no sense if we allow the stepper to stop before ``evaluating'' a
+  they are values. Because a value cannot be evaluated, it would not make
+  sense if we allow the stepper to stop before ``evaluating'' a
   value.
 
   During the instrumentation of the second filter, the sub-expression
@@ -146,11 +146,14 @@ debug stop(3 + 3 + 4) in
 
 \item \emph{Decomposition}. \label{num:simple_example_decompose} The
   expression is then decomposed into an evaluation context and a
-  selected expression. The instrumented expression from the last step can
-  be decomposed by recursively decomposing addition (D-Add-L) and
-  residue expressions (D-Residue) into an evaluation context
-  (Listing~\ref{lst:simple_example_decompose}) and a selected
-  expression \code{1 + 2}.
+  selected redex. The decomposition rules are non-deterministic: they
+  may yield multiple evaluation contexts, each isolating a different
+  redex. This corresponds to the stepper highlighting multiple
+  reducible expressions for the user to choose from. Here we show one
+  possible decomposition, selecting \code{1 + 2} as the redex by
+  recursively decomposing addition (D-Add-L) and residue expressions
+  (D-Residue) into the evaluation context in
+  Listing~\ref{lst:simple_example_decompose}.
 
   \begin{lstlisting}[language=hazel,caption={Decomposed evaluation context},label={lst:simple_example_decompose}]
 debug stop(\$e) in
@@ -164,19 +167,20 @@ debug stop(3 + 3 + 4) in
 \rangle^{1}
 \)@\end{lstlisting}
 
-\item \emph{Making a Decision}. \label{num:simple_example_select} Decide
-  which action (stop or continue) to take based on all the residue
-  expressions around the mark in the evaluation context. The action is
-  decided using the following set of informal rules:
+\item \emph{Action Selection}. \label{num:simple_example_select} Decide
+  which action (\(\ActStep\) or \(\ActSkip\)) to take based on the
+  residue expressions surrounding the mark in the evaluation context.
+  This is formalized by the analysis judgment
+  \fbox{\(\Analyze{(a, l)}{\mathcal{E}}{a'}\)} in
+  Section~\ref{sec:filter}. Intuitively, the judgment walks outward
+  from the mark through the context:
 
   \begin{enumerate}
-  \item For an expression that is not a residue expression, the action
-    will be the one that comes from the sub-expression that contains
-    the mark.
-  \item For a residue expression, if the action from its only
-    sub-expression has a higher priority, use the action from the
-    sub-expression; otherwise, use the action of the residue
-    expression.
+  \item For a non-residue frame, the action propagates unchanged from
+    the inner context.
+  \item For a residue frame, if the residue has higher priority than
+    the current action, the residue's action takes over; otherwise,
+    the current action is kept.
   \end{enumerate}
 
   In this case, the evaluation context yields an action of
