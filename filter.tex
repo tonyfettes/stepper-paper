@@ -36,9 +36,10 @@ applies to a single step, \(\GasAll\) applies to all steps in the
 evaluation of the matched sub-expression.
 
 The full syntax (Fig.~\ref{fig:filter-syntax}) extends the untyped
-lambda calculus with natural numbers and addition for concreteness. Two
-expression forms are added: \(\Filter{f}{e}\), which the user writes,
-and \(\Residue{a}{g}{l}{e}\), which is generated internally by the
+lambda calculus with natural numbers, addition, and a fixpoint operator
+\(\Fix{x}{e}\) for recursive definitions. Two expression forms are
+added: \(\Filter{f}{e}\), which the user writes, and
+\(\Residue{a}{g}{l}{e}\), which is generated internally by the
 stepper. A residue marks a sub-expression where a filter has already
 matched, recording the action~\(a\), gas~\(g\), and a
 priority~\(l\)---a natural number reflecting how recently the
@@ -55,7 +56,7 @@ matches any value.
       \DefGas g    &\Coloneqq& \GasOne \mid \GasAll \\
       \DefLvl l    &\Coloneqq& \mathbb{N} \\
       \DefFilter f &\Coloneqq& (p, a, g) \\
-      \DefExp e    &\Coloneqq& x \mid e(e) \mid \Lam{x}{e} \mid e + e \mid \Nat{n} \\
+      \DefExp e    &\Coloneqq& x \mid e(e) \mid \Lam{x}{e} \mid \Fix{x}{e} \mid e + e \mid \Nat{n} \\
                    &\mid     & \Filter{f}{e} \\
                    &\mid     & \Residue{a}{g}{l}{e} \\
       \DefPat p    &\Coloneqq& x \mid p(p) \mid \Lam{x}{p} \mid p + p \mid \Nat{n} \\
