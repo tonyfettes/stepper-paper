@@ -1,0 +1,295 @@
+\section{Worked Example: Stepping Through the Calculus}\label{sec:worked_example}\label{sec:filter_example}
+
+This appendix traces the full execution of the Filtered Stepper
+Calculus on a small example, showing each phase of the stepping
+pipeline in detail. Readers may find it helpful to follow this
+example while reading the formal rules in Section~\ref{sec:filter}.
+
+Consider the following Hazel program:
+\lstset{xleftmargin=1in}
+\begin{lstlisting}[language=hazel,caption={A simple Hazel program}]
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+1 + 2 + 3 + 4\end{lstlisting}
+
+This program sums the numbers from 1 to 4. The plus operation in Hazel
+is binary and left-associative, so the expression
+\code{1 + 2 + 3 + 4} is evaluated as follows:
+\code{1 + 2} becomes
+\code{3}, then \code{3 + 3}
+becomes \code{6}, and finally
+\code{6 + 4} becomes
+\code{10}.
+
+Each ``macroscopic'' step of the evaluation is achieved by a series of
+``microscopic'' steps. Here is a detailed description of the first few
+``microscopic'' steps of the program above.
+
+\begin{enumerate}
+\item \emph{Instrumentation}. \label{num:simple_example_instrument} In this
+  step, we traverse the expression recursively, collecting all filters along the
+  path. For each sub-expression, we check if it matches any of the collected
+  filters. If a match is found, we insert a residue expression with the filter
+  information around the matched sub-expression.
+
+  The matching process itself is recursive. If an
+  expression is constructed in the same way as the filter pattern, we recurse into
+  their sub-expressions to check if the sub-expressions match. If all
+  sub-expressions match, we say the expression matches the filter. In
+  most cases, we want the filter pattern to match
+  against more kinds of expression. Therefore, we introduced two
+  wildcard matchers: \code{\$e} and
+  \code{\$v}. The former matches against any
+  expression, while the latter matches against any value. Assume
+  we are checking whether expression \(e\) matches filter
+  \(f\). This process can be informally described as the following
+  steps.
+
+  \begin{enumerate}
+  \item If \(f\) is the wildcard \(\$e\), exit the process and return
+    that \(e\) and \(\$e\) match.
+  \item If \(f\) is the wildcard \(\$v\), and \(e\) is a value, exit the process and return
+    that \(e\) matches \(\$v\).
+  \item If \(f\) is the wildcard \(\$v\), and \(e\) is not a value, exit
+    the process and return that \(e\) does not match \(\$v\).
+  \item If \(e\) and \(f\) do not share a common construction,
+    exit the matching process and return that \(e\) and \(f\) do not
+    match.
+  \item Otherwise, iterate over each pair of child expressions or
+    child filters in \(e\) and \(f\). Since \(e\) and \(f\) share the
+    same construction, their number of child items is always the
+    same. For each pair, go to step 1.
+  \item If every pair in step 5 matches, exit the process and return that \(e\) and \(f\) match.
+  \end{enumerate}
+
+  If no sub-expression matches any of the collected filters, the
+  stepper defaults to stepping through every expression.
+
+  In our example, we apply three filters to the expression
+  \code{1 + 2 + 3 + 4}:
+  \begin{enumerate}
+  \item \code{debug stop(\$e)}
+  \item \code{debug eval(1 + 2 + 3 + 4)}
+  \item \code{debug stop(3 + 3 + 4)}
+  \end{enumerate}
+
+  Before instrumentation, we assign priorities to active
+  filters. The priority is assigned based on the order in which filters are added to
+  the list of active filters. Here, we assign priority 0 to the first
+  filter, 1 to the second one, and 2 to the last one. The priority
+  is used when deciding which action to take for the next step.
+
+  During the instrumentation of the first filter, any sub-expression
+  will match the pattern, so we wrap every sub-expression in a residue
+  expression \(\Residue{\ActStep}{\GasOne}{0}{\ldots}\). For the
+  innermost sub-expressions, like \code{1},
+  \code{2}, etc., we do not instrument them since
+  they are values. Because a value cannot be evaluated, it would make
+  no sense if we allow the stepper to stop before ``evaluating'' a
+  value.
+
+  During the instrumentation of the second filter, the sub-expression
+  \code{1 + 2 + 3 + 4} matches the pattern, so we
+  wrap it in a residue expression
+  \(\Residue{\ActSkip}{\GasAll}{0}{\ldots}\) (I-Add-Y).  The
+  instrumented expression is shown in
+  Listing~\ref{lst:simple_example_instrument}.
+
+  \begin{lstlisting}[language=hazel,caption={Program after instrumentation},label={lst:simple_example_instrument}]
+debug stop(\$e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(\rangle^{\GasAll}
+\rangle^{\GasOne}\)@\end{lstlisting}
+
+  One thing you might have noticed is that we did not put instrumented
+  residue expressions around values.
+
+  During the instrumentation of the third filter, no sub-expression matches the
+  pattern \code{3 + 3 + 4}, so no residue expression is
+  inserted (I-Add-N). The instrumented expression remains unchanged.
+
+\item \emph{Optimization}. The stepper might have inserted too many
+  residue expressions in the instrumentation step, and this could
+  cause a significant slowdown of the stepper. Therefore,
+  some redundant residue expressions are optimized out during this
+  step.
+
+  Generally, we want to remove all immediately adjacent residue
+  expressions by picking the one with highest priority, because this is
+  the only one that can be picked among these residue expressions
+  during the action selection process. Here, the two outermost
+  residue expressions are adjacent:
+  \(\Residue{\ActStep}{\GasOne}{0}{\Residue{\ActSkip}{\GasAll}{1}{\ldots}}\),
+  we remove the ones with lower priorities (O-Residue-Inner) to get
+  \(\Residue{\ActSkip}{\GasAll}{1}{\ldots}\).
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={Program after instrumentation, optimized},
+]
+debug stop(\$e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+\item \emph{Decomposition}. \label{num:simple_example_decompose} The
+  expression is then decomposed into an evaluation context and a
+  selected expression. The instrumented expression from the last step can
+  be decomposed by recursively decomposing addition (D-Add-L) and
+  residue expressions (D-Residue) into an evaluation context
+  (Listing~\ref{lst:simple_example_decompose}) and a selected
+  expression \code{1 + 2}.
+
+  \begin{lstlisting}[language=hazel,caption={Decomposed evaluation context},label={lst:simple_example_decompose}]
+debug stop(\$e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\circ{\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+\item \emph{Making a Decision}. \label{num:simple_example_select} Decide
+  which action (stop or continue) to take based on all the residue
+  expressions around the mark in the evaluation context. The action is
+  decided using the following set of informal rules:
+
+  \begin{enumerate}
+  \item For an expression that is not a residue expression, the action
+    will be the one that comes from the sub-expression that contains
+    the mark.
+  \item For a residue expression, if the action from its only
+    sub-expression has a higher priority, use the action from the
+    sub-expression; otherwise, use the action of the residue
+    expression.
+  \end{enumerate}
+
+  In this case, the evaluation context yields an action of
+  \(\ActSkip\) in the decision-making process, while the expression
+  itself is kept the same.
+
+\item \emph{Residue removal (Decaying)}. Residue expressions that
+  have a gas of one are removed from the expression. This step is
+  done using the \(\Decay\) function. The expression after the removal
+  of the residue expression is:
+  \begin{lstlisting}[language=hazel,caption={Evaluation context after decaying},label={lst:simple_example_decay}]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(\prescript{\ActSkip}{1}{\langle}\circ\)@ + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
+
+\item \emph{User Interaction}. If the selected expression produced in
+  Step~\ref{num:simple_example_decompose} is of the form
+  \code{debug .. in ..} or
+  \(\Residue{a}{g}{l}{e}\), or the selected action from
+  Step~\ref{num:simple_example_select} is \(\ActSkip\), the stepper
+  will skip over this step and proceed into the next step. (S-Filter and
+  S-Skip). Otherwise, the stepper will yield the control to the user,
+  and let them choose which next possible step to take. (S-Step)
+
+  In this case, the selected action is \(\ActSkip\). Therefore, the stepper
+  will skip over this step and proceed into the next step.
+
+\item \emph{Instruction Transition}. The selected expression is
+  instruction-transitioned to a new expression. In this case, the selected
+  expression \code{1 + 2} is
+  instruction-transitioned to \code{3} according
+  to the transition rule (T-Add).
+
+\item \emph{Composition}. When the selected expression is
+  instruction-transitioned to a new expression, we need to compose the
+  transitioned selected expression with the evaluation context to get the
+  updated expression. The rules for composition are the same as the
+  rules for decomposition, but instead, we start with rule (D-Add-L)
+  to build up the recomposed expression in a bottom-up way. The
+  recomposed expression is:
+  \begin{lstlisting}[language=hazel]
+debug stop($e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(\prescript{\ActSkip}{1}{\langle}\)@3 + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
+
+\item \emph{Recursion}. As long as we do not get a value, we will keep
+  stepping through the expression, i.e. go back to
+  Step~\ref{num:simple_example_instrument}.
+\end{enumerate}
+
+In the following round of the procedure, the program is first
+instrumented (Listing~\ref{lst:simple_example_1_instrument}), then is
+decomposed into an evaluation context
+(Listing~\ref{lst:simple_example_1_decompose}) with a selected
+expression \code{3 + 3}.
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={Instrumented program in Round 2},
+  label={lst:simple_example_1_instrument}
+]
+debug stop(\$e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{2}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\)@3 + 3@\(
+\rangle^{\GasOne}
+\)@ + 4@\(
+\rangle^{\GasOne}
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+\begin{lstlisting}[
+  language=hazel,
+  caption={Decomposed evaluation context in Round 2},
+  label={lst:simple_example_1_decompose}
+]
+debug stop(\$e) in
+debug eval(1 + 2 + 3 + 4) in
+debug stop(3 + 3 + 4) in
+@\(
+\prescript{\ActSkip}{1}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\prescript{\ActStep}{2}{\langle}
+\prescript{\ActStep}{0}{\langle}
+\circ
+\rangle^{\GasOne}
+\)@ + 4@\(
+\rangle^{\GasOne}
+\rangle^{\GasOne}
+\rangle^{\GasAll}
+\)@\end{lstlisting}
+
+Then, we compute the selected action to be \(\ActStep\). Therefore,
+the stepper stops at this step and lets the user choose which
+sub-expression should be evaluated for the next step by clicking the
+yellow area shown in Figure~\ref{fig:simple_example_final_ui}.
+
+\begin{figure}[h]
+  \centering
+  \frame{\includegraphics[width=0.4\textwidth]{images/filter-example-user-select.png}}
+  \Description{Stepper UI showing the expression 1 + 2 + 3 + 4 with a highlighted subexpression selection and control buttons.}
+  \caption{User Interface for the \emph{User Selection} Step.}\label{fig:simple_example_final_ui}
+\end{figure}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "main"
+%%% End:
