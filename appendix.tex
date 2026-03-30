@@ -73,11 +73,11 @@ Each ``macroscopic'' step of the evaluation is achieved by a series of
   \item \code{debug stop(3 + 3 + 4)}
   \end{enumerate}
 
-  Before instrumentation, we assign priorities to active
-  filters. The priority is assigned based on the order in which filters are added to
-  the list of active filters. Here, we assign priority 0 to the first
-  filter, 1 to the second one, and 2 to the last one. The priority
-  is used when deciding which action to take for the next step.
+  Before instrumentation, we assign priorities to active filters. The priority
+  is assigned based on the order in which filters are added to the list of
+  active filters. Here, we assign priority 0 to the first filter, 1 to the
+  second one, and 2 to the last one. The priority is used when deciding which
+  action to take for the next step.
 
   During the instrumentation of the first filter, any sub-expression
   will match the pattern, so we wrap every sub-expression in a residue
@@ -100,12 +100,12 @@ debug stop(\$e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(
-\prescript{\ActStep}{0}{\langle}
-\prescript{\ActSkip}{1}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(\rangle^{\GasAll}
-\rangle^{\GasOne}\)@\end{lstlisting}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActSkip}{\GasAll}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\)@1 + 2@\({\rangle}^{0}\)@ + 3@\({\rangle}^{0}\)@ + 4@\(\rangle^{1}
+\rangle^{0}\)@\end{lstlisting}
 
   One thing you might have noticed is that we did not put instrumented
   residue expressions around values.
@@ -137,11 +137,11 @@ debug stop(\$e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(
-\prescript{\ActSkip}{1}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\)@1 + 2@\({\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(
-\rangle^{\GasAll}
+\prescript{\ActSkip}{\GasAll}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\)@1 + 2@\({\rangle}^{0}\)@ + 3@\({\rangle}^{0}\)@ + 4@\(
+\rangle^{1}
 \)@\end{lstlisting}
 
 \item \emph{Decomposition}. \label{num:simple_example_decompose} The
@@ -157,11 +157,11 @@ debug stop(\$e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(
-\prescript{\ActSkip}{1}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\circ{\rangle}^{\GasOne}\)@ + 3@\({\rangle}^{\GasOne}\)@ + 4@\(
-\rangle^{\GasAll}
+\prescript{\ActSkip}{\GasAll}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\circ{\rangle}^{0}\)@ + 3@\({\rangle}^{0}\)@ + 4@\(
+\rangle^{1}
 \)@\end{lstlisting}
 
 \item \emph{Making a Decision}. \label{num:simple_example_select} Decide
@@ -191,7 +191,7 @@ debug stop(3 + 3 + 4) in
 debug stop($e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
-@\(\prescript{\ActSkip}{1}{\langle}\circ\)@ + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
+@\(\prescript{\ActSkip}{\GasAll}{\langle}\circ\)@ + 3 + 4@\(\rangle^{1}\)@\end{lstlisting}
 
 \item \emph{User Interaction}. If the selected expression produced in
   Step~\ref{num:simple_example_decompose} is of the form
@@ -222,7 +222,7 @@ debug stop(3 + 3 + 4) in
 debug stop($e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
-@\(\prescript{\ActSkip}{1}{\langle}\)@3 + 3 + 4@\(\rangle^{\GasAll}\)@\end{lstlisting}
+@\(\prescript{\ActSkip}{\GasAll}{\langle}\)@3 + 3 + 4@\(\rangle^{1}\)@\end{lstlisting}
 
 \item \emph{Recursion}. As long as we do not get a value, we will keep
   stepping through the expression, i.e. go back to
@@ -244,16 +244,16 @@ debug stop(\$e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(
-\prescript{\ActSkip}{1}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\prescript{\ActStep}{2}{\langle}
-\prescript{\ActStep}{0}{\langle}
+\prescript{\ActSkip}{\GasAll}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
 \)@3 + 3@\(
-\rangle^{\GasOne}
+\rangle^{0}
 \)@ + 4@\(
-\rangle^{\GasOne}
-\rangle^{\GasOne}
-\rangle^{\GasAll}
+\rangle^{2}
+\rangle^{0}
+\rangle^{1}
 \)@\end{lstlisting}
 
 \begin{lstlisting}[
@@ -265,16 +265,16 @@ debug stop(\$e) in
 debug eval(1 + 2 + 3 + 4) in
 debug stop(3 + 3 + 4) in
 @\(
-\prescript{\ActSkip}{1}{\langle}
-\prescript{\ActStep}{0}{\langle}
-\prescript{\ActStep}{2}{\langle}
-\prescript{\ActStep}{0}{\langle}
+\prescript{\ActSkip}{\GasAll}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
+\prescript{\ActStep}{\GasOne}{\langle}
 \circ
-\rangle^{\GasOne}
+\rangle^{0}
 \)@ + 4@\(
-\rangle^{\GasOne}
-\rangle^{\GasOne}
-\rangle^{\GasAll}
+\rangle^{2}
+\rangle^{0}
+\rangle^{1}
 \)@\end{lstlisting}
 
 Then, we compute the selected action to be \(\ActStep\). Therefore,
