@@ -222,7 +222,6 @@ and residue frames.
 \fbox{\(\Transition{e}{e'}\)} \(e\) takes an instruction transition to \(e'\).
 \begin{mathpar}
   \inferrule[T-Ap]{
-    \Value{e_1} \\
     \Value{e_2}
   }{
     \Transition{(\Lam{x}{e_1})(e_2)}{\FSubst{e_2}{x}{e_1}}
