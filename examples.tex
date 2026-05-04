@@ -11,7 +11,7 @@ highlights every reducible expression (redex) in the program; the user
 clicks on a highlighted redex to reduce it, and the expression is
 rewritten in place. A history panel lets the user expand the full
 sequence of steps taken so far. \autoref{fig:full-trace} shows the
-complete trace for this program: each line corresponds to one
+partial trace for this program: each line corresponds to one
 reduction step, and the green highlight at the bottom marks the
 available redexes for the next step.
 
@@ -26,16 +26,18 @@ available redexes for the next step.
   \hfill
   \begin{subfigure}{0.57\linewidth}
     \frame{\includegraphics[scale=0.37]{images/eg12.png}}
-    \Description{Full stepper trace for the map example, with highlighted next-step location and substitution annotations.}
-    \caption{Full stepper trace. Each line is one small-step transition. The green highlight at the bottom marks where the next step will be taken.}
+    \Description{Partial stepper trace for the map example, stopped at map([1, 2, 3], square), with highlighted next-step location and substitution annotations.}
+    \caption{Partial stepper trace for the map example, stopped at \code{map([1, 2, 3], square)}. Each line is one small-step transition. The green highlight at the bottom marks where the next step will be taken.}
     \label{fig:full-trace}
   \end{subfigure}
   \caption{The stepper used on a list map example.}
 \end{figure}
 
-However, the full trace can be distracting---for this small program it
-already contains many steps, most of which are routine substitutions
-and arithmetic that do not help the reader understand \code{map}.
+The factorial traces in \autoref{fig:intro-fac} illustrate why showing
+every step can be distracting: routine substitutions and arithmetic
+quickly obscure the reductions that matter. The partial trace in
+\autoref{fig:full-trace} shows the same issue beginning to arise for
+\code{map}.
 To address this, the Hazel stepper provides \emph{filter} annotations
 that the user embeds in the program text to control which steps appear
 in the trace.
